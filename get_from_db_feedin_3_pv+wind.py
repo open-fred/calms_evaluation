@@ -59,7 +59,7 @@ germany_u = fetch_geometries(union=True, **germany_u)
 germany_u['geom'] = geoplot.postgis2shapely(germany_u.geom)
 
 # Fiona read shape file to define the area to analyse
-c = fiona.open('C:/temp/germany_and_offshore.shp')
+c = fiona.open('germany_and_offshore/germany_and_offshore.shp')
 pol = c.next()
 geom = shape(pol['geometry'])
 
