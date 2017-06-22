@@ -1,6 +1,6 @@
 import oemof.db as db
-from shapely import geometry as geopy
-from shapely.geometry import Polygon
+#from shapely import geometry as geopy
+#from shapely.geometry import Polygon
 from oemof.db import coastdat
 import pandas as pd
 import numpy as np
@@ -11,7 +11,7 @@ from shapely.geometry import shape
 import fiona
 from feedinlib import powerplants as plants
 import pickle
-from shapely.wkt import loads as load_wkt
+#from shapely.wkt import loads as load_wkt
 from geopy.geocoders import Nominatim
 # from progressbar import ProgressBar
 

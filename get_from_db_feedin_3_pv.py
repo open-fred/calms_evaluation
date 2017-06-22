@@ -1,6 +1,6 @@
 import oemof.db as db
-from shapely import geometry as geopy
-from shapely.geometry import Polygon
+#from shapely import geometry as geopy
+#from shapely.geometry import Polygon
 from oemof.db import coastdat
 import pandas as pd
 import numpy as np
@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 from shapely.geometry import shape
 import fiona
-from oemof import db
+#from oemof import db
 from feedinlib import powerplants as plants
 import pickle
-from shapely.wkt import loads as load_wkt
-from geopy.geocoders import Nominatim
+#from shapely.wkt import loads as load_wkt
+#from geopy.geocoders import Nominatim
 
 def fetch_geometries(union=False, **kwargs):
     """Reads the geometry and the id of all given tables and writes it to
