@@ -67,8 +67,7 @@ pol = c.next()
 geom = shape(pol['geometry'])
 
 
-
-#use pickle to save or load the weather objects----------------PICKLE---#######
+# use pickle to save or load the weather objects----------------PICKLE---######
 
 #multi_weather = pickle.load(open('multi_weather_save.p', 'rb'))
 multi_weather = coastdat.get_weather(conn, germany_u['geom'][0], year)
@@ -124,8 +123,7 @@ for i in range(len(multi_weather)):
     vc = vector_coll
     calm = len(max(vc, key=len))
 
-
-#    multi_weather[i].geometry
+    # multi_weather[i].geometry
     calm_list = np.append(calm_list, calm)
     pickle.dump(calm_list, open('multi_weather_save.p', 'wb'))
     calm_list2 = (calm_list) / (calm_list.max(axis=0))
@@ -136,7 +134,7 @@ for i in range(len(multi_weather)):
 #print(calm_list)
 x = np.amax(calm_list)
 y = np.amin(calm_list)
-z = sum(calm_list)/ 792
+z = sum(calm_list) / 792
 print('-> average calm lenght', z, 'hours')
 print()
 print('-> longest calm:', x, 'hours')
@@ -191,7 +189,7 @@ df3 = pd.concat([df, df2], axis=1)
 
 df4 = df3.loc[df3['calms'] == 1]
 coordinate = df4['geom']
-id_row = df4[df4['geom']==coordinate]
+id_row = df4[df4['geom'] == coordinate]
 #print(id_row)
 #number = id_row.values[0][1]
 #number2 = id_row.values[1]
@@ -202,8 +200,6 @@ id_row = df4[df4['geom']==coordinate]
 #print(coordinate)
 #print()
 #print(points)
-
-
 
 ######-----------------Point analysis----------------------------------########
 
@@ -243,15 +239,10 @@ id_row = df4[df4['geom']==coordinate]
 #clb = plt.colorbar()
 #clb.set_label('P_PV')
 #plt.show()
-
 #######---------------------------------------------------------------#########
 
-
-
-
-
 example = geoplot.GeoPlotter(df3['geom'], (3, 16, 47, 56),
-                                data=df3['calms'])
+                             data=df3['calms'])
 
 example.cmapname = 'inferno'
 #example.cmapname = 'winter'
@@ -264,9 +255,10 @@ example.plot(edgecolor='black', linewidth=1, alpha=1)
 print('creating plot...')
 plt.title('Longest calms Germany {0}'.format(year))
 example.draw_legend(legendlabel="Length of wind calms < 5 % P_nenn in h",
-                     extend='neither',tick_list=[0, np.amax(calm_list) *0.25,
-                          np.amax(calm_list) *0.5, np.amax(calm_list) *0.75,
-                           np.amax(calm_list)])
+                    extend='neither', tick_list=[0, np.amax(calm_list) * 0.25,
+                                                 np.amax(calm_list) * 0.5,
+                                                 np.amax(calm_list) * 0.75,
+                                                 np.amax(calm_list)])
 
 example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
@@ -274,4 +266,3 @@ example.basemap.drawcoastlines()
 plt.tight_layout()
 plt.box(on=None)
 plt.show()
-

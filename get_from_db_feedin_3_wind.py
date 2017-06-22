@@ -66,7 +66,7 @@ pol = c.next()
 geom = shape(pol['geometry'])
 
 
-#use pickle to save or load the weather objects----------------PICKLE---#######
+# use pickle to save or load the weather objects----------------PICKLE---######
 
 #multi_weather = pickle.load(open('multi_weather_save.p', 'rb'))
 multi_weather = coastdat.get_weather(conn, germany_u['geom'][0], year)
@@ -118,9 +118,10 @@ power_limit = 0.05  # defined the power limit for the calms in %
 
 for i in range(len(multi_weather)):
     wind_feedin = E126_power_plant.feedin(weather=multi_weather[i],
-        installed_capacity=1)
+                                          installed_capacity=1)
     calm, = np.where(wind_feedin < power_limit)  # defines the calm
-    vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)  # find all calm periods
+    # find all calm periods
+    vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
     vc = vector_coll
     calm = len(max(vc, key=len))  # find the longest calm from all periods
     calm_list = np.append(calm_list, calm)  # append it to the list
@@ -143,7 +144,7 @@ print()
 # Histogram, contains longest calms of each
 
 plt.hist(calm_list3, normed=False, range=(calm_list.min(),
-     calm_list.max()))
+                                          calm_list.max()))
 plt.xlabel('length of calms in h')
 plt.ylabel('number of calms')
 plt.title('Calm histogram Germany{0}'.format(year))
@@ -181,11 +182,13 @@ germany['geom'] = geoplot.postgis2shapely(germany.geom)
 print('building Dataframe...')
 print()
 
-d = {'id': np.arange(len(multi_weather)), 'calms': calm_list2}  # calm_list2 -> normalised calms
+# calm_list2 -> normalised calms
+d = {'id': np.arange(len(multi_weather)), 'calms': calm_list2}
 x = coastdat_de['geom']
 df = pd.DataFrame(data=d)
 df2 = pd.DataFrame(data=x, columns=['geom'])
-df3 = pd.concat([df, df2], axis=1)  # axis=1 brings booth colums to the same level
+df3 = pd.concat([df, df2],
+                axis=1)  # axis=1 brings booth colums to the same level
 df5 = pd.DataFrame.sort(df3, columns='calms')
 
 df4 = df3.loc[df3['calms'] == 1]
@@ -193,8 +196,6 @@ df6 = df5[:-1]
 print(df4)
 coordinate = df6['geom']
 id_row = df6[df6['geom'] == coordinate]
-
-
 
 
 ######------Point analysis for the location with the longest calm------########
@@ -206,7 +207,7 @@ loc = coordinate.iloc[0].centroid
 #print(location.address)
 fig, ax = plt.subplots()
 my_weather = coastdat.get_weather(
-   conn, coordinate.iloc[0].centroid, year)  # center of the square
+    conn, coordinate.iloc[0].centroid, year)  # center of the square
 my_weather.data.v_wind.plot()
 plt.title('Wind speed longest calm location'.format(year))
 ax.set_ylabel('wind speed in m/s')
@@ -229,7 +230,7 @@ fig, ax = plt.subplots()
 # Plot image
 
 plt.imshow(b, cmap='afmhot', interpolation='nearest',
-     origin='lower', aspect='auto', vmax=power_limit)
+           origin='lower', aspect='auto', vmax=power_limit)
 
 plt.title('Wind feedin {0} nominal power < {1}'.format(year, power_limit))
 ax.set_xlabel('days of year')
@@ -241,8 +242,8 @@ plt.show()
 #######--------------Plot the result in a map-------------------------#########
 
 
-example = geoplot.GeoPlotter(df3['geom'], (3, 16, 47, 56)  # region of germany
-                                , data=df3['calms'])
+example = geoplot.GeoPlotter(df3['geom'], (3, 16, 47, 56),  # region of germany
+                             data=df3['calms'])
 example.cmapname = 'inferno'
 
 #example.geometries = germany['geom'] -> Netzregionen
@@ -251,10 +252,12 @@ example.plot(edgecolor='black', linewidth=1, alpha=1)
 
 print('creating plot...')
 plt.title('Longest calms Germany {0}'.format(year))
+# create legend by longest calm
 example.draw_legend(legendlabel="Length of wind calms < 5 % P_nenn in h",
-                     extend='neither', tick_list=[0, np.amax(calm_list) * 0.25,
-                          np.amax(calm_list) * 0.5, np.amax(calm_list) * 0.75,
-                          np.amax(calm_list)])  # create legend by longest calm
+                    extend='neither', tick_list=[0, np.amax(calm_list) * 0.25,
+                                                 np.amax(calm_list) * 0.5,
+                                                 np.amax(calm_list) * 0.75,
+                                                 np.amax(calm_list)])
 
 
 example.basemap.drawcountries(color='white', linewidth=2)
@@ -263,4 +266,3 @@ example.basemap.drawcoastlines()
 plt.tight_layout()
 plt.box(on=None)
 plt.show()
-
