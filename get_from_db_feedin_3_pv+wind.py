@@ -15,6 +15,8 @@ import pickle
 from geopy.geocoders import Nominatim
 from progressbar import ProgressBar
 pbar = ProgressBar()
+import os
+
 
 def fetch_geometries(union=False, **kwargs):
     """Reads the geometry and the id of all given tables and writes it to
@@ -59,7 +61,8 @@ germany_u = fetch_geometries(union=True, **germany_u)
 germany_u['geom'] = geoplot.postgis2shapely(germany_u.geom)
 
 # Fiona read shape file to define the area to analyse
-c = fiona.open('germany_and_offshore/germany_and_offshore.shp')
+c = fiona.open(os.path.join(os.path.dirname(__file__),
+                            'germany_and_offshore/germany_and_offshore.shp'))
 pol = c.next()
 geom = shape(pol['geometry'])
 
