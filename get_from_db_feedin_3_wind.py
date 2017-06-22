@@ -33,7 +33,7 @@ def fetch_geometries(union=False, **kwargs):
             FROM {schema}.{table}
             WHERE "{where_col}" {where_cond};'''
     db_string = sql_str.format(**kwargs)
-    results = db.connection().execute(db_string)
+    results = db.connection(section='reiners_db').execute(db_string)
     cols = results.keys()
     return pd.DataFrame(results.fetchall(), columns=cols)
 
@@ -53,7 +53,7 @@ year = 2011
 
 # Connection to the weather data
 print('collecting weather objects...')
-conn = db.connection()
+conn = db.connection(section='reiners_db')
 germany_u = fetch_geometries(union=True, **germany_u)
 germany_u['geom'] = geoplot.postgis2shapely(germany_u.geom)
 
