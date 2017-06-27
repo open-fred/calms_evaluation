@@ -252,8 +252,9 @@ ax.set_xlabel('days of year')
 ax.set_ylabel('hours of day')
 clb = plt.colorbar()
 clb.set_label('P_Wind')
-figure.savefig(os.path.join('Plots/wind_feedin',
-                            'Wind_feedin_{0}'.format(year)))
+figure.savefig(os.path.join('Plots/wind_feedin', 'Wind_feedin_' + str(year) +
+                            '_nominal_power_lower_' + str(power_limit) +
+                            '.pdf'))
 figure.set_tight_layout(True)
 plt.close()
 
