@@ -230,7 +230,13 @@ plt.close()
 # Reshape data into matrix
 matrix_wind = []
 wind_feedin = E126_power_plant.feedin(weather=my_weather, installed_capacity=1)
-matrix_wind = np.reshape(wind_feedin, (365, 24))  # leap year -> 366 x 24
+
+# Number of days of the year
+if year in [2000, 2004, 2008, 2012]:
+    days = 366
+else:
+    days = 365
+matrix_wind = np.reshape(wind_feedin, (days, 24))
 a = np.transpose(matrix_wind)
 b = np.flipud(a)
 fig, ax = plt.subplots()
