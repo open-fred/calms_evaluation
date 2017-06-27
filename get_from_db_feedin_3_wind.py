@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('pdf')  # generate PDF output by default
+import matplotlib.pyplot as plt
 import oemof.db as db
 #from shapely import geometry as geopy
 #from shapely.geometry import Polygon
@@ -5,7 +8,6 @@ from oemof.db import coastdat
 import pandas as pd
 import numpy as np
 import geoplot
-import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 from shapely.geometry import shape
 import fiona
@@ -142,14 +144,16 @@ print('-> shortest calm:', y, 'hours')
 print()
 
 # Histogram, contains longest calms of each
-
+figure = plt.figure()
 plt.hist(calm_list3, normed=False, range=(calm_list.min(),
                                           calm_list.max()))
 plt.xlabel('length of calms in h')
 plt.ylabel('number of calms')
 plt.title('Calm histogram Germany{0}'.format(year))
-plt.show()
-
+figure.savefig(os.path.join('Plots/histograms',
+                            'calm_histogram_{0}'.format(year)))
+figure.set_tight_layout(True)
+plt.close()
 
 coastdat_de = {
     'table': 'de_grid',
@@ -208,10 +212,14 @@ loc = coordinate.iloc[0].centroid
 fig, ax = plt.subplots()
 my_weather = coastdat.get_weather(
     conn, coordinate.iloc[0].centroid, year)  # center of the square
+figure = plt.figure()
 my_weather.data.v_wind.plot()
 plt.title('Wind speed longest calm location'.format(year))
 ax.set_ylabel('wind speed in m/s')
-plt.show()
+figure.savefig(os.path.join('Plots/wind_speed_longest_calm_location', 'Wind_' +
+                            'speed_longest_calm_location_{0}'.format(year)))
+figure.set_tight_layout(True)
+plt.close()
 
 #f = coordinate.iloc[0].centroid
 #f1 = int(f)
@@ -229,6 +237,7 @@ fig, ax = plt.subplots()
 
 # Plot image
 
+figure = plt.figure()
 plt.imshow(b, cmap='afmhot', interpolation='nearest',
            origin='lower', aspect='auto', vmax=power_limit)
 
@@ -237,11 +246,13 @@ ax.set_xlabel('days of year')
 ax.set_ylabel('hours of day')
 clb = plt.colorbar()
 clb.set_label('P_Wind')
-plt.show()
+figure.savefig(os.path.join('Plots/wind_feedin',
+                            'Wind_feedin_{0}'.format(year)))
+figure.set_tight_layout(True)
+plt.close()
 
 #######--------------Plot the result in a map-------------------------#########
-
-
+figure = plt.figure()
 example = geoplot.GeoPlotter(df3['geom'], (3, 16, 47, 56),  # region of germany
                              data=df3['calms'])
 example.cmapname = 'inferno'
@@ -258,11 +269,11 @@ example.draw_legend(legendlabel="Length of wind calms < 5 % P_nenn in h",
                                                  np.amax(calm_list) * 0.5,
                                                  np.amax(calm_list) * 0.75,
                                                  np.amax(calm_list)])
-
-
 example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
 example.basemap.drawcoastlines()
-plt.tight_layout()
 plt.box(on=None)
-plt.show()
+figure.savefig(os.path.join('Plots/longest_calms_germany',
+                            'longest_calms_germany_{0}'.format(year)))
+figure.set_tight_layout(True)
+plt.close()
