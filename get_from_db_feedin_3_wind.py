@@ -283,3 +283,4 @@ figure.savefig(os.path.join('Plots/longest_calms_germany',
                             '.pdf'))
 figure.set_tight_layout(True)
 plt.close()
+print('---- completed ----')
