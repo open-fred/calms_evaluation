@@ -252,8 +252,9 @@ plt.close()
 #######--------------Plot the result in a map-------------------------#########
 
 figure = plt.figure()
-example = geoplot.GeoPlotter(df3['geom'], (3, 16, 47, 56),  # region of germany
-                             data=df3['calms'])
+example = geoplot.GeoPlotter(geom=df3['geom'],
+                             bbox=(3, 16, 47, 56),  # region of germany
+                             data=df3['calms'], color='data')
 example.cmapname = 'inferno'
 
 #example.geometries = germany['geom'] -> Netzregionen
