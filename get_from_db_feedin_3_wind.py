@@ -112,6 +112,7 @@ advent_module = plants.Photovoltaic(**advent210)
 print('calculating calms...')
 vector_coll = {}
 calm_list = []
+v_wind_annual = []  # average annual wind speed
 
 power_limit = 0.05  # defined the power limit for the calms in %
 
@@ -130,6 +131,10 @@ for i in range(len(multi_weather)):
 #    calm_list2 = (calm_list) / (calm_list.max(axis=0))  # normalise calms
     calm_list3 = np.sort(calm_list)  # sort calms
 #    print('done_' + str(i+1), '/792')
+    # Calculate average annual wind speed of each weather object
+    v_wind_annual = np.append(v_wind_annual,
+                              sum(multi_weather[i].data.v_wind) /
+                              len(multi_weather[i].data.v_wind))
 
 # print results
 x = np.amax(calm_list)  # maximum of the longest
@@ -188,8 +193,11 @@ d = {'id': np.arange(len(multi_weather)), 'calms': calm_list2}
 x = coastdat_de['geom']
 df = pd.DataFrame(data=d)
 df2 = pd.DataFrame(data=x, columns=['geom'])
-df3 = pd.concat([df, df2],
-                axis=1)  # axis=1 brings booth colums to the same level
+# normalise wind speed
+v_wind_annual2 = v_wind_annual/np.max(v_wind_annual)
+df_annual = pd.DataFrame(data=v_wind_annual2, columns=['v_wind'])
+df3 = pd.concat([df, df2, df_annual],
+                axis=1)  # axis=1 brings colums to the same level
 df5 = pd.DataFrame.sort(df3, columns='calms')
 df4 = df3.loc[df3['calms'] == 1]
 df6 = df5[:-1]
@@ -287,4 +295,35 @@ figure.savefig(os.path.join('Plots/longest_calms_germany',
                             '.pdf'))
 figure.set_tight_layout(True)
 plt.close()
+
+#######--------Plot average annual wind speed in a map----------------#########
+
+figure = plt.figure()
+example = geoplot.GeoPlotter(geom=df3['geom'],
+                             bbox=(3, 16, 47, 56),  # region of germany
+                             data=df3['v_wind'], color='data')
+example.cmapname = 'inferno'
+example.plot(edgecolor='black', linewidth=1, alpha=1)
+
+print('creating plot...')
+
+plt.title('Average annual wind speeds {0}'.format(year))
+
+# create legend by longest calm
+example.draw_legend(legendlabel="Average annual wind speed in m/s",
+                    extend='neither', tick_list=[0,
+                                                 np.max(v_wind_annual) * 0.25,
+                                                 np.max(v_wind_annual) * 0.5,
+                                                 np.max(v_wind_annual) * 0.75,
+                                                 np.max(v_wind_annual)])
+
+example.basemap.drawcountries(color='white', linewidth=2)
+example.basemap.shadedrelief()
+example.basemap.drawcoastlines()
+plt.box(on=None)
+figure.savefig(os.path.join('Plots/average_wind_speed',
+                            "average_wind_speed_{0}".format(year)))
+figure.set_tight_layout(True)
+plt.close()
+
 print('---- completed ----')
