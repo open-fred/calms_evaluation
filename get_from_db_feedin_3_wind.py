@@ -126,7 +126,8 @@ for i in range(len(multi_weather)):
     vc = vector_coll
     calm = len(max(vc, key=len))  # find the longest calm from all periods
     calm_list = np.append(calm_list, calm)  # append it to a copy of the list
-    calm_list2 = (calm_list) / (calm_list.max(axis=0))  # normalise calms
+    calm_list2 = (calm_list) / (1020)  # normalise calms
+#    calm_list2 = (calm_list) / (calm_list.max(axis=0))  # normalise calms
     calm_list3 = np.sort(calm_list)  # sort calms
 #    print('done_' + str(i+1), '/792')
 
@@ -271,10 +272,10 @@ plt.title('Longest calms Germany {0}'.format(year))
 example.draw_legend(legendlabel="Length of wind calms < " +
                     "{0} % P_nenn in h".format(int(power_limit*100)),
                     extend='neither',
-                    tick_list=[0, np.amax(calm_list) * 0.25,
-                               np.amax(calm_list) * 0.5,
-                               np.amax(calm_list) * 0.75,
-                               np.amax(calm_list)])
+                    tick_list=[0, 1020 * 0.25,
+                               1020 * 0.5,
+                               1020 * 0.75,
+                               1020.0])
 
 example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
