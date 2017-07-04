@@ -187,6 +187,8 @@ df = pd.DataFrame(data=d)
 df2 = pd.DataFrame(data=x, columns=['geom'])
 df3 = pd.concat([df, df2],
                 axis=1)  # axis=1 brings booth colums to the same level
+df3.loc[791, 'calms'] = 0.5
+df3.loc[791, 'id'] = 791.0  # TODO: find missing weather object
 df5 = pd.DataFrame.sort(df3, columns='calms')
 df4 = df3.loc[df3['calms'] == 1]
 df6 = df5[:-1]
