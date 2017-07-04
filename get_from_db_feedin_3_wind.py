@@ -278,6 +278,8 @@ example.basemap.shadedrelief()
 example.basemap.drawcoastlines()
 plt.box(on=None)
 figure.savefig(os.path.join('Plots/longest_calms_germany',
-                            'longest_calms_germany_{0}'.format(year)))
+                            'longest_calms_germany_' + str(year) +
+                            '_nominal_power_lower_' + str(power_limit) +
+                            '.pdf'))
 figure.set_tight_layout(True)
 plt.close()
