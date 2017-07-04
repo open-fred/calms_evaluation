@@ -68,15 +68,12 @@ pol = c.next()
 geom = shape(pol['geometry'])
 
 
-# use pickle to save or load the weather objects----------------PICKLE---######
+####--------PICKLE---Use pickle to save or load the weather objects---------###
 
 #multi_weather = pickle.load(open('multi_weather_save.p', 'rb'))
 multi_weather = coastdat.get_weather(conn, germany_u['geom'][0], year)
 my_weather = multi_weather[0]
-
-
 pickle.dump(multi_weather, open('multi_weather_save.p', 'wb'))
-
 
 ##########-------feedinlib Components--------------------------################
 
@@ -109,15 +106,15 @@ advent_module = plants.Photovoltaic(**advent210)
 
 
 ########----------------Calculating calms----------------------#############
+
 print('calculating calms...')
 vector_coll = {}
 calm_list = []
 
 power_limit = 0.05  # defined the power limit for the calms in %
 
-# Collecting calm vectors in dictionary vector_col
+# Collecting calm vectors in dictionary vector_coll
 # Loop over 792 weather objects to find the longest calms for each
-
 for i in range(len(multi_weather)):
     wind_feedin = E126_power_plant.feedin(weather=multi_weather[i],
                                           installed_capacity=1)
@@ -126,24 +123,22 @@ for i in range(len(multi_weather)):
     vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
     vc = vector_coll
     calm = len(max(vc, key=len))  # find the longest calm from all periods
-    calm_list = np.append(calm_list, calm)  # append it to the list
+    calm_list = np.append(calm_list, calm)  # append it to a copy of the list
     calm_list2 = (calm_list) / (calm_list.max(axis=0))  # normalise calms
     calm_list3 = np.sort(calm_list)  # sort calms
-    print('done_' + str(i), '/792')
+#    print('done_' + str(i+1), '/792')
 
 # print results
-
 x = np.amax(calm_list)  # maximum of the longest
 y = np.amin(calm_list)  # minimum of the longest
 z = sum(calm_list) / 792  # average of the longest
-
 print('-> average calm lenght', z, 'hours')
 print()
 print('-> longest calm:', x, 'hours')
 print('-> shortest calm:', y, 'hours')
 print()
 
-# Histogram, contains longest calms of each
+# Histogram, contains longest calms of each location
 figure = plt.figure()
 plt.hist(calm_list3, normed=False, range=(calm_list.min(),
                                           calm_list.max()))
@@ -174,7 +169,6 @@ germany = {
     'where_cond': '> 0',
     }
 
-
 coastdat_de = fetch_geometries(**coastdat_de)
 coastdat_de['geom'] = geoplot.postgis2shapely(coastdat_de.geom)
 germany = fetch_geometries(**germany)
@@ -194,10 +188,8 @@ df2 = pd.DataFrame(data=x, columns=['geom'])
 df3 = pd.concat([df, df2],
                 axis=1)  # axis=1 brings booth colums to the same level
 df5 = pd.DataFrame.sort(df3, columns='calms')
-
 df4 = df3.loc[df3['calms'] == 1]
 df6 = df5[:-1]
-print(df4)
 coordinate = df6['geom']
 id_row = df6[df6['geom'] == coordinate]
 
@@ -207,8 +199,8 @@ id_row = df6[df6['geom'] == coordinate]
 geolocator = Nominatim()
 loc = coordinate.iloc[0].centroid
 #location = geolocator.reverse("50.35962183274544, 12.96941145516576 ")
-
 #print(location.address)
+
 fig, ax = plt.subplots()
 my_weather = coastdat.get_weather(
     conn, coordinate.iloc[0].centroid, year)  # center of the square
@@ -233,7 +225,7 @@ wind_feedin = E126_power_plant.feedin(weather=my_weather, installed_capacity=1)
 
 # Number of days of the year
 if year in [2000, 2004, 2008, 2012]:
-    days = 366
+    days = 366  # leap year
 else:
     days = 365
 matrix_wind = np.reshape(wind_feedin, (days, 24))
@@ -242,7 +234,6 @@ b = np.flipud(a)
 fig, ax = plt.subplots()
 
 # Plot image
-
 figure = plt.figure()
 plt.imshow(b, cmap='afmhot', interpolation='nearest',
            origin='lower', aspect='auto', vmax=power_limit)
@@ -259,6 +250,7 @@ figure.set_tight_layout(True)
 plt.close()
 
 #######--------------Plot the result in a map-------------------------#########
+
 figure = plt.figure()
 example = geoplot.GeoPlotter(df3['geom'], (3, 16, 47, 56),  # region of germany
                              data=df3['calms'])
