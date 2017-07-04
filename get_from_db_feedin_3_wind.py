@@ -261,13 +261,18 @@ example.cmapname = 'inferno'
 example.plot(edgecolor='black', linewidth=1, alpha=1)
 
 print('creating plot...')
+
 plt.title('Longest calms Germany {0}'.format(year))
+
 # create legend by longest calm
-example.draw_legend(legendlabel="Length of wind calms < 5 % P_nenn in h",
-                    extend='neither', tick_list=[0, np.amax(calm_list) * 0.25,
-                                                 np.amax(calm_list) * 0.5,
-                                                 np.amax(calm_list) * 0.75,
-                                                 np.amax(calm_list)])
+example.draw_legend(legendlabel="Length of wind calms < " +
+                    "{0} % P_nenn in h".format(int(power_limit*100)),
+                    extend='neither',
+                    tick_list=[0, np.amax(calm_list) * 0.25,
+                               np.amax(calm_list) * 0.5,
+                               np.amax(calm_list) * 0.75,
+                               np.amax(calm_list)])
+
 example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
 example.basemap.drawcoastlines()
