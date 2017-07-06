@@ -1,0 +1,135 @@
+import oemof.db as db
+from shapely import geometry as geopy
+from oemof.db import coastdat
+import pandas as pd
+import numpy as np
+import geoplot
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+import pickle
+
+
+def fetch_geometries(conn, **kwargs):
+    """Reads the geometry and the id of all given tables and writes it to
+     the 'geom'-key of each branch of the data tree.
+    """
+    sql_str = '''
+        SELECT {id_col}, ST_AsText(
+            ST_SIMPLIFY({geo_col},{simp_tolerance})) geom
+        FROM {schema}.{table}
+        WHERE "{where_col}" {where_cond}
+        ORDER BY {id_col} DESC;'''
+
+    db_string = sql_str.format(**kwargs)
+    results = conn.execute(db_string)
+    cols = results.keys()
+    return pd.DataFrame(results.fetchall(), columns=cols)
+
+
+def fetch_shape_germany(conn):
+    """
+    Gets shape for Germany.
+    """
+    sql_str = '''
+            SELECT ST_AsText(ST_Union(geom)) AS geom
+            FROM deutschland.deu3_21'''
+    results = conn.execute(sql_str)
+    cols = results.keys()
+    return pd.DataFrame(results.fetchall(), columns=cols)
+
+
+def get_multiweather(conn, year=None, geom=None, pickle_load=True,
+                     filename='multiweather_pickle.p'):
+    if not pickle_load:
+        multi_weather = coastdat.get_weather(conn, geom, year)
+        pickle.dump(multi_weather, open(filename, 'wb'))
+    if pickle_load:
+        multi_weather = pickle.load(open(filename, 'rb'))
+    return multi_weather
+
+
+def calculate_avg_wind_speed(multi_weather):
+    avg_wind_speed = {}
+    for i in range(len(multi_weather)):
+        avg_wind_speed[multi_weather[i].name] = np.mean(
+            multi_weather[i].data.v_wind)
+    avg_wind_speed = pd.DataFrame(data=avg_wind_speed,
+                                  index=['results']).transpose()
+    return avg_wind_speed
+
+
+def coastdat_geoplot(results_df, show_plot=True, filename_plot='plot.png',
+                     save_figure=True):
+    # results_df should have the coastdat region gid as index and the values
+    # that are plotted (average wind speed, calm length, etc.) in the column
+    # 'results'
+
+    # plot coastdat cells with results
+    coastdat_de = {
+        'table': 'de_grid',
+        'geo_col': 'geom',
+        'id_col': 'gid',
+        'schema': 'coastdat',
+        'simp_tolerance': '0.01',
+        'where_col': 'gid',
+        'where_cond': '> 0'
+    }
+    coastdat_de = fetch_geometries(conn, **coastdat_de)
+    coastdat_de['geom'] = geoplot.postgis2shapely(coastdat_de.geom)
+    coastdat_de = coastdat_de.set_index('gid')  # set gid as index
+    coastdat_de = coastdat_de.join(results_df)  # join results
+    # scale results
+    coastdat_de['results'] = coastdat_de['results'] / max(
+        coastdat_de['results'])
+
+    coastdat_plot = geoplot.GeoPlotter(
+        geom=coastdat_de['geom'], bbox=(3, 16, 47, 56),
+        data=coastdat_de['results'], color='data', cmapname='afmhot_r')
+    coastdat_plot.plot(edgecolor='')
+
+    # plot Germany with regions
+    germany = {
+        'table': 'deu3_21',
+        'geo_col': 'geom',
+        'id_col': 'region_id',
+        'schema': 'deutschland',
+        'simp_tolerance': '0.01',
+        'where_col': 'region_id',
+        'where_cond': '> 0'}
+    germany = fetch_geometries(conn, **germany)
+    germany['geom'] = geoplot.postgis2shapely(germany.geom)
+
+    coastdat_plot.geometries = germany['geom']
+    coastdat_plot.plot(facecolor='', edgecolor='white', linewidth=1)
+
+    plt.tight_layout()
+    plt.box(on=None)
+    if show_plot:
+        plt.show()
+    if save_figure:
+        plt.savefig(filename_plot)
+    return
+
+
+if __name__ == "__main__":
+    year = 2011
+    conn = db.connection(section='reiner')
+    # get geometry for Germany
+    geom_germany = fetch_shape_germany(conn)
+    geom_germany['geom'] = geoplot.postgis2shapely(geom_germany.geom)
+    # get multiweather
+    multi_weather = get_multiweather(conn, year=year,
+                                     geom=geom_germany['geom'].values[0],
+                                     pickle_load=True,
+                                     filename='multiweather_pickle.p')
+    # calculate average wind speed
+    calc = calculate_avg_wind_speed(multi_weather)
+    # plot
+    coastdat_geoplot(calc, show_plot=True, filename_plot='plot.png',
+                     save_figure=True)
+
+
+
+
+
+
