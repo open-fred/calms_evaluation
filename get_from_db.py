@@ -1,5 +1,4 @@
 import oemof.db as db
-from shapely import geometry as geopy
 from oemof.db import coastdat
 import pandas as pd
 import numpy as np
@@ -33,9 +32,7 @@ def fetch_shape_germany(conn):
     sql_str = '''
             SELECT ST_AsText(ST_Union(geom)) AS geom
             FROM deutschland.deu3_21'''
-    results = conn.execute(sql_str)
-    cols = results.keys()
-    return pd.DataFrame(results.fetchall(), columns=cols)
+    return conn.execute(sql_str).fetchall()[0]
 
 
 def get_multiweather(conn, year=None, geom=None, pickle_load=True,
@@ -58,12 +55,12 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def coastdat_geoplot(results_df, show_plot=True, filename_plot='plot.png',
-                     save_figure=True):
+def coastdat_geoplot(results_df, show_plot=True, legend_label=None,
+                     filename_plot='plot.png', save_figure=True):
     # results_df should have the coastdat region gid as index and the values
     # that are plotted (average wind speed, calm length, etc.) in the column
     # 'results'
-
+    fig = plt.figure()
     # plot coastdat cells with results
     coastdat_de = {
         'table': 'de_grid',
@@ -79,13 +76,15 @@ def coastdat_geoplot(results_df, show_plot=True, filename_plot='plot.png',
     coastdat_de = coastdat_de.set_index('gid')  # set gid as index
     coastdat_de = coastdat_de.join(results_df)  # join results
     # scale results
-    coastdat_de['results'] = coastdat_de['results'] / max(
-        coastdat_de['results'])
+    coastdat_de['results_scaled'] = coastdat_de['results'] / max(
+        coastdat_de['results'].dropna())
 
     coastdat_plot = geoplot.GeoPlotter(
         geom=coastdat_de['geom'], bbox=(3, 16, 47, 56),
-        data=coastdat_de['results'], color='data', cmapname='afmhot_r')
+        data=coastdat_de['results_scaled'], color='data', cmapname='afmhot_r')
     coastdat_plot.plot(edgecolor='')
+    coastdat_plot.draw_legend(legendlabel=legend_label,
+        interval=(0, int(max(coastdat_de['results'].dropna()))))
 
     # plot Germany with regions
     germany = {
@@ -104,32 +103,34 @@ def coastdat_geoplot(results_df, show_plot=True, filename_plot='plot.png',
 
     plt.tight_layout()
     plt.box(on=None)
+
     if show_plot:
         plt.show()
     if save_figure:
-        plt.savefig(filename_plot)
+        fig.savefig(filename_plot)
     return
 
 
 if __name__ == "__main__":
+
     year = 2011
     conn = db.connection(section='reiner')
+    legend_label = 'Average wind speed'
+    pickle_load = False
     # get geometry for Germany
-    geom_germany = fetch_shape_germany(conn)
-    geom_germany['geom'] = geoplot.postgis2shapely(geom_germany.geom)
+    geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
+    # to plot smaller area
+    #from shapely import geometry as geopy
+    #geom = [geopy.Polygon(
+        #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
     # get multiweather
     multi_weather = get_multiweather(conn, year=year,
-                                     geom=geom_germany['geom'].values[0],
-                                     pickle_load=True,
+                                     geom=geom[0],
+                                     pickle_load=pickle_load,
                                      filename='multiweather_pickle.p')
     # calculate average wind speed
     calc = calculate_avg_wind_speed(multi_weather)
+
     # plot
-    coastdat_geoplot(calc, show_plot=True, filename_plot='plot.png',
-                     save_figure=True)
-
-
-
-
-
-
+    coastdat_geoplot(calc, show_plot=True, legend_label=legend_label,
+                     filename_plot='plot.png', save_figure=True)
