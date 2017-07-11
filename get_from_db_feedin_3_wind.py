@@ -153,8 +153,9 @@ plt.hist(calm_list3, normed=False, range=(calm_list.min(),
 plt.xlabel('length of calms in h')
 plt.ylabel('number of calms')
 plt.title('Calm histogram Germany{0}'.format(year))
-figure.savefig(os.path.join('Plots/histograms',
-                            'calm_histogram_{0}'.format(year)))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/histograms',
+                               'calm_histogram_{0}'.format(year))))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -219,8 +220,10 @@ figure = plt.figure()
 my_weather.data.v_wind.plot()
 plt.title('Wind speed longest calm location'.format(year))
 ax.set_ylabel('wind speed in m/s')
-figure.savefig(os.path.join('Plots/wind_speed_longest_calm_location', 'Wind_' +
-                            'speed_longest_calm_location_{0}'.format(year)))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/wind_speed_longest_calm_location',
+                               'Wind_speed_longest_calm_' +
+                               'location_{0}'.format(year))))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -254,9 +257,10 @@ ax.set_xlabel('days of year')
 ax.set_ylabel('hours of day')
 clb = plt.colorbar()
 clb.set_label('P_Wind')
-figure.savefig(os.path.join('Plots/wind_feedin', 'Wind_feedin_' + str(year) +
-                            '_nominal_power_lower_' + str(power_limit) +
-                            '.pdf'))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/wind_feedin',
+                               '_nominal_power_lower_' + str(power_limit) +
+                               '.pdf')))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -289,10 +293,11 @@ example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
 example.basemap.drawcoastlines()
 plt.box(on=None)
-figure.savefig(os.path.join('Plots/longest_calms_germany',
-                            'longest_calms_germany_' + str(year) +
-                            '_nominal_power_lower_' + str(power_limit) +
-                            '.pdf'))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/longest_calms_germany',
+                               'longest_calms_germany_' + str(year) +
+                               '_nominal_power_lower_' + str(power_limit) +
+                               '.pdf')))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -321,8 +326,9 @@ example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
 example.basemap.drawcoastlines()
 plt.box(on=None)
-figure.savefig(os.path.join('Plots/average_wind_speed',
-                            "average_wind_speed_{0}".format(year)))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/average_wind_speed',
+                               "average_wind_speed_{0}".format(year))))
 figure.set_tight_layout(True)
 plt.close()
 
