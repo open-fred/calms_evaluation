@@ -55,7 +55,6 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def coastdat_geoplot(results_df, show_plot=True, legend_label=None,
 def calculate_calms(multi_weather, power_plant, power_limit, normalise=None):
     # Collecting calm vectors in dictionary vector_coll
     # Loop over 792 weather objects to find the longest calms for each region
@@ -85,6 +84,7 @@ def calculate_calms(multi_weather, power_plant, power_limit, normalise=None):
     return calms_1, calms_2, calms_3
 
 
+def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True):
     # results_df should have the coastdat region gid as index and the values
     # that are plotted (average wind speed, calm length, etc.) in the column
