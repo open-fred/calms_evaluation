@@ -56,6 +56,35 @@ def calculate_avg_wind_speed(multi_weather):
 
 
 def coastdat_geoplot(results_df, show_plot=True, legend_label=None,
+def calculate_calms(multi_weather, power_plant, power_limit, normalise=None):
+    # Collecting calm vectors in dictionary vector_coll
+    # Loop over 792 weather objects to find the longest calms for each region
+    vector_coll = {}
+    calms_1 = {}
+    calms_2 = {}
+    calms_3 = {}
+    for i in range(len(multi_weather)):
+        wind_feedin = power_plant.feedin(weather=multi_weather[i],
+                                         installed_capacity=1)
+        calm, = np.where(wind_feedin < power_limit)  # defines the calm
+        # find all calm periods
+        vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
+        # find the longest calm from all periods
+        calm = len(max(vector_coll, key=len))
+        calms_1[multi_weather[i].name] = calm
+        # normalise calms
+        if not normalise:
+            normalise = calms_1.max(axis=0)
+        calms_2[multi_weather[i].name] = (calms_1[multi_weather[i].name] /
+                                          normalise)
+    # Create DataFrames
+    calms_1 = pd.DataFrame(data=calms_1, index=['results']).transpose()
+    calms_2 = pd.DataFrame(data=calms_2, index=['results']).transpose()
+    # sort calms
+    calms_3 = np.sort(np.array(calms_1['results']))
+    return calms_1, calms_2, calms_3
+
+
                      filename_plot='plot.png', save_figure=True):
     # results_df should have the coastdat region gid as index and the values
     # that are plotted (average wind speed, calm length, etc.) in the column
@@ -132,5 +161,5 @@ if __name__ == "__main__":
     calc = calculate_avg_wind_speed(multi_weather)
 
     # plot
-    coastdat_geoplot(calc, show_plot=True, legend_label=legend_label,
+    coastdat_geoplot(calc, conn, show_plot=True, legend_label=legend_label,
                      filename_plot='plot.png', save_figure=True)
