@@ -85,5 +85,6 @@ legend_label = 'Annual power duration curve {0}'.format(year)  # TODO: Jahresdau
 plot_power_duration_curve(wind_feedin[1114110], show_plot=True,
                           legend_label=None, xlabel='Hours of the year in h',
                           ylabel='Normalised power output',
-                          filename_plot='Power_duration_curve_{0}_1114110'.format(year),
+                          filename_plot='Power_duration_curve_' +
+                          '{0}_1114110'.format(year),
                           save_figure=True)
