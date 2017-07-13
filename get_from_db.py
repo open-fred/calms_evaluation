@@ -217,10 +217,9 @@ if __name__ == "__main__":
     #geom = [geopy.Polygon(
         #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
     # get multiweather
-    multi_weather = get_multiweather(conn, year=year,
-                                     geom=geom[0],
-                                     pickle_load=pickle_load,
-                                     filename='multiweather_pickle.p')
+    multi_weather = get_data(conn, year=year, geom=geom[0],
+                             pickle_load=pickle_load,
+                             filename='multiweather_pickle.p')
     # calculate average wind speed
     calc = calculate_avg_wind_speed(multi_weather)
 
