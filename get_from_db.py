@@ -147,11 +147,11 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     Histogram contains longest calms of each location.
     """
     # sort calms
-    calms_3 = np.sort(np.array(calms['results']))
+    calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_3, normed=False, range=(np.array(calms).min(),
-                                           np.array(calms).max()))
+    plt.hist(calms_sorted, normed=False, range=(calms_sorted.min(),
+                                                calms_sorted.max()))
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(legend_label)
