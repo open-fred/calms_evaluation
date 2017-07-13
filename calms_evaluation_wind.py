@@ -9,29 +9,12 @@ from get_from_db import (fetch_shape_germany, get_multiweather,
                          calculate_avg_wind_speed, coastdat_geoplot,
                          calculate_calms, plot_histogram)
 
-# Set parameters
+# ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
 power_limit = 0.05  # defined the power limit for the calms in %
 pickle_load = True  # Set to False if you use a year you haven't dumped yet
 conn = db.connection(section='reiner')
 
-# get geometry for Germany
-geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
-# to plot smaller area
-#from shapely import geometry as geopy
-#geom = [geopy.Polygon(
-    #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
-
-# get multiweather
-print(' ')
-print('Collecting weather objects...')
-multi_weather = get_multiweather(conn, year=year,
-                                 geom=geom[0],
-                                 pickle_load=pickle_load,
-                                 filename='multiweather_pickle_' +
-                                 '{0}.p'.format(year))
-print('Calculating calms...')
-# Set parameters for calms
 normalise = 1020.0  # If None: normalisation with maximum calm lenght
 # Specification of the weather data set CoastDat2
 coastDat2 = {
@@ -49,24 +32,48 @@ enerconE126 = {
     'data_height': coastDat2}
 # Initialise wind turbine
 E126 = plants.WindPowerPlant(**enerconE126)
-# Calculate calms
-calms_1 = calculate_calms(multi_weather, E126, power_limit)
 
-# calculate average wind speed
+# Get geometry for Germany for geoplot
+geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
+# to plot smaller area
+#from shapely import geometry as geopy
+#geom = [geopy.Polygon(
+    #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
+
+
+# -------------------------- Get weather objects ---------------------------- #
+print(' ')
+print('Collecting weather objects...')
+multi_weather = get_multiweather(conn, year=year,
+                                 geom=geom[0],
+                                 pickle_load=pickle_load,
+                                 filename='multiweather_pickle_' +
+                                 '{0}.p'.format(year))
+
+# ------------------------------ Calculations ------------------------------- #
+# Calculate calms
+print('Calculating calms...')
+calms_max, calms_min = calculate_calms(multi_weather, E126, power_limit)
+
+# Calculate average wind speed
 wind_speed = calculate_avg_wind_speed(multi_weather)
 
-# plots
+# ---------------------------------- Plots ---------------------------------- #
+
 print('Creating plots...')
+# Geoplot of average wind speed of each location
 legend_label = 'Average wind speed_{0}'.format(year)
 coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Average_wind_speed_{0}'.format(year),
                  save_figure=True)
+# Geoplot of longest calms of each location
 legend_label = 'Longest calms Germany {0}'.format(year)
-coastdat_geoplot(calms_1, conn, show_plot=True, legend_label=legend_label,
+coastdat_geoplot(calms_max, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Longest_calms_{0}'.format(year),
                  save_figure=True, scale_parameter=1020.0)
+# Histogram containing longest calms of each location
 legend_label = 'Calm histogram Germany{0}'.format(year)
-plot_histogram(calms_1, show_plot=True, legend_label=legend_label,
+plot_histogram(calms_max, show_plot=True, legend_label=legend_label,
                xlabel='Length of calms in h', ylabel='Number of calms',
                filename_plot='Calm_histogram_{0}'.format(year),
                save_figure=True)
