@@ -166,6 +166,8 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                                                 calms_sorted.max()))
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    plt.ylim(ymax=400)
+    plt.xlim(xmax=1200)
     plt.title(legend_label)
     if show_plot:
         plt.show()
@@ -193,7 +195,6 @@ def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(legend_label)
-    # plt.yticks(np.arange(0, 0.1, 5))
     plt.ylim(ymax=0.1)
     plt.xlim(xmax=2500)
     if show_plot:
