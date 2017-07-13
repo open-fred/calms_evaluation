@@ -39,7 +39,7 @@ def fetch_geometries(union=False, **kwargs):
             FROM {schema}.{table}
             WHERE "{where_col}" {where_cond};'''
     db_string = sql_str.format(**kwargs)
-    results = db.connection(section='reiners_db').execute(db_string)
+    results = db.connection(section='reiner').execute(db_string)
     cols = results.keys()
     return pd.DataFrame(results.fetchall(), columns=cols)
 
@@ -59,7 +59,7 @@ year = 2011
 
 # Connection to the weather data
 print('collecting weather objects...')
-conn = db.connection(section='reiners_db')
+conn = db.connection(section='reiner')
 germany_u = fetch_geometries(union=True, **germany_u)
 germany_u['geom'] = geoplot.postgis2shapely(germany_u.geom)
 
@@ -112,6 +112,7 @@ advent_module = plants.Photovoltaic(**advent210)
 print('calculating calms...')
 vector_coll = {}
 calm_list = []
+v_wind_annual = []  # average annual wind speed
 
 power_limit = 0.05  # defined the power limit for the calms in %
 
@@ -130,6 +131,10 @@ for i in range(len(multi_weather)):
 #    calm_list2 = (calm_list) / (calm_list.max(axis=0))  # normalise calms
     calm_list3 = np.sort(calm_list)  # sort calms
 #    print('done_' + str(i+1), '/792')
+    # Calculate average annual wind speed of each weather object
+    v_wind_annual = np.append(v_wind_annual,
+                              sum(multi_weather[i].data.v_wind) /
+                              len(multi_weather[i].data.v_wind))
 
 # print results
 x = np.amax(calm_list)  # maximum of the longest
@@ -148,8 +153,9 @@ plt.hist(calm_list3, normed=False, range=(calm_list.min(),
 plt.xlabel('length of calms in h')
 plt.ylabel('number of calms')
 plt.title('Calm histogram Germany{0}'.format(year))
-figure.savefig(os.path.join('Plots/histograms',
-                            'calm_histogram_{0}'.format(year)))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/histograms',
+                               'calm_histogram_{0}'.format(year))))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -188,8 +194,11 @@ d = {'id': np.arange(len(multi_weather)), 'calms': calm_list2}
 x = coastdat_de['geom']
 df = pd.DataFrame(data=d)
 df2 = pd.DataFrame(data=x, columns=['geom'])
-df3 = pd.concat([df, df2],
-                axis=1)  # axis=1 brings booth colums to the same level
+# normalise wind speed
+v_wind_annual2 = v_wind_annual/np.max(v_wind_annual)
+df_annual = pd.DataFrame(data=v_wind_annual2, columns=['v_wind'])
+df3 = pd.concat([df, df2, df_annual],
+                axis=1)  # axis=1 brings colums to the same level
 df5 = pd.DataFrame.sort(df3, columns='calms')
 df4 = df3.loc[df3['calms'] == 1]
 df6 = df5[:-1]
@@ -211,8 +220,10 @@ figure = plt.figure()
 my_weather.data.v_wind.plot()
 plt.title('Wind speed longest calm location'.format(year))
 ax.set_ylabel('wind speed in m/s')
-figure.savefig(os.path.join('Plots/wind_speed_longest_calm_location', 'Wind_' +
-                            'speed_longest_calm_location_{0}'.format(year)))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/wind_speed_longest_calm_location',
+                               'Wind_speed_longest_calm_' +
+                               'location_{0}'.format(year))))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -246,9 +257,10 @@ ax.set_xlabel('days of year')
 ax.set_ylabel('hours of day')
 clb = plt.colorbar()
 clb.set_label('P_Wind')
-figure.savefig(os.path.join('Plots/wind_feedin', 'Wind_feedin_' + str(year) +
-                            '_nominal_power_lower_' + str(power_limit) +
-                            '.pdf'))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/wind_feedin',
+                               '_nominal_power_lower_' + str(power_limit) +
+                               '.pdf')))
 figure.set_tight_layout(True)
 plt.close()
 
@@ -281,10 +293,43 @@ example.basemap.drawcountries(color='white', linewidth=2)
 example.basemap.shadedrelief()
 example.basemap.drawcoastlines()
 plt.box(on=None)
-figure.savefig(os.path.join('Plots/longest_calms_germany',
-                            'longest_calms_germany_' + str(year) +
-                            '_nominal_power_lower_' + str(power_limit) +
-                            '.pdf'))
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/longest_calms_germany',
+                               'longest_calms_germany_' + str(year) +
+                               '_nominal_power_lower_' + str(power_limit) +
+                               '.pdf')))
 figure.set_tight_layout(True)
 plt.close()
+
+#######--------Plot average annual wind speed in a map----------------#########
+
+figure = plt.figure()
+example = geoplot.GeoPlotter(geom=df3['geom'],
+                             bbox=(3, 16, 47, 56),  # region of germany
+                             data=df3['v_wind'], color='data')
+example.cmapname = 'inferno'
+example.plot(edgecolor='black', linewidth=1, alpha=1)
+
+print('creating plot...')
+
+plt.title('Average annual wind speeds {0}'.format(year))
+
+# create legend by longest calm
+example.draw_legend(legendlabel="Average annual wind speed in m/s",
+                    extend='neither', tick_list=[0,
+                                                 np.max(v_wind_annual) * 0.25,
+                                                 np.max(v_wind_annual) * 0.5,
+                                                 np.max(v_wind_annual) * 0.75,
+                                                 np.max(v_wind_annual)])
+
+example.basemap.drawcountries(color='white', linewidth=2)
+example.basemap.shadedrelief()
+example.basemap.drawcoastlines()
+plt.box(on=None)
+figure.savefig(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                               'Plots/average_wind_speed',
+                               "average_wind_speed_{0}".format(year))))
+figure.set_tight_layout(True)
+plt.close()
+
 print('---- completed ----')

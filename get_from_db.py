@@ -6,11 +6,13 @@ import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
+import os
 
 
 def fetch_geometries(conn, **kwargs):
-    """Reads the geometry and the id of all given tables and writes it to
-     the 'geom'-key of each branch of the data tree.
+    """
+    Reads the geometry and the id of all given tables and writes it to
+    the 'geom'-key of each branch of the data tree.
     """
     sql_str = '''
         SELECT {id_col}, ST_AsText(
@@ -55,11 +57,36 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def coastdat_geoplot(results_df, show_plot=True, legend_label=None,
-                     filename_plot='plot.png', save_figure=True):
-    # results_df should have the coastdat region gid as index and the values
-    # that are plotted (average wind speed, calm length, etc.) in the column
-    # 'results'
+def calculate_calms(multi_weather, power_plant, power_limit):
+    """
+    Collecting calm vectors in dictionary vector_coll
+    Loop over all weather objects to find the longest calms for each region.
+    Returns DataFrame.
+    """
+    vector_coll = {}
+    calms_1 = {}
+    for i in range(len(multi_weather)):
+        wind_feedin = power_plant.feedin(weather=multi_weather[i],
+                                         installed_capacity=1)
+        calm, = np.where(wind_feedin < power_limit)  # defines the calm
+        # find all calm periods
+        vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
+        # find the longest calm from all periods
+        calm = len(max(vector_coll, key=len))
+        calms_1[multi_weather[i].name] = calm
+    # Create DataFrames
+    calms_1 = pd.DataFrame(data=calms_1, index=['results']).transpose()
+    return calms_1
+
+
+def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
+                     filename_plot='plot.png', save_figure=True,
+                     cmapname='inferno', scale_parameter=None):
+    """
+    results_df should have the coastdat region gid as index and the values
+    that are plotted (average wind speed, calm length, etc.) in the column
+    'results'
+    """
     fig = plt.figure()
     # plot coastdat cells with results
     coastdat_de = {
@@ -76,15 +103,15 @@ def coastdat_geoplot(results_df, show_plot=True, legend_label=None,
     coastdat_de = coastdat_de.set_index('gid')  # set gid as index
     coastdat_de = coastdat_de.join(results_df)  # join results
     # scale results
-    coastdat_de['results_scaled'] = coastdat_de['results'] / max(
-        coastdat_de['results'].dropna())
-
+    if not scale_parameter:
+        scale_parameter = max(coastdat_de['results'].dropna())
+    coastdat_de['results_scaled'] = coastdat_de['results'] / scale_parameter
     coastdat_plot = geoplot.GeoPlotter(
         geom=coastdat_de['geom'], bbox=(3, 16, 47, 56),
-        data=coastdat_de['results_scaled'], color='data', cmapname='afmhot_r')
+        data=coastdat_de['results_scaled'], color='data', cmapname=cmapname)
     coastdat_plot.plot(edgecolor='')
     coastdat_plot.draw_legend(legendlabel=legend_label,
-        interval=(0, int(max(coastdat_de['results'].dropna()))))
+        interval=(0, int(scale_parameter)))
 
     # plot Germany with regions
     germany = {
@@ -107,9 +134,34 @@ def coastdat_geoplot(results_df, show_plot=True, legend_label=None,
     if show_plot:
         plt.show()
     if save_figure:
-        fig.savefig(filename_plot)
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
     return
 
+
+def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
+                   ylabel=None, filename_plot='plot_histogram.png',
+                   save_figure=True):
+    """ calms should have the coastdat region gid as index and the values
+    that are plotted in the column 'results'.
+    Histogram contains longest calms of each location.
+    """
+    # sort calms
+    calms_3 = np.sort(np.array(calms['results']))
+    # plot
+    fig = plt.figure()
+    plt.hist(calms_3, normed=False, range=(np.array(calms).min(),
+                                           np.array(calms).max()))
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(legend_label)
+    if show_plot:
+        plt.show()
+    if save_figure:
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+    fig.set_tight_layout(True)
+    plt.close()
 
 if __name__ == "__main__":
 
@@ -132,5 +184,5 @@ if __name__ == "__main__":
     calc = calculate_avg_wind_speed(multi_weather)
 
     # plot
-    coastdat_geoplot(calc, show_plot=True, legend_label=legend_label,
+    coastdat_geoplot(calc, conn, show_plot=True, legend_label=legend_label,
                      filename_plot='plot.png', save_figure=True)
