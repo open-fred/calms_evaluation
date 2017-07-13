@@ -9,12 +9,13 @@ from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
-power_limit = 0.05  # defined the power limit for the calms in %
+# define the power limit for the calms in %
+power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
 load_multi_weather = True  # False if you use a year you haven't dumped yet
 load_wind_feedin = True  # False if you use a year you haven't dumped yet
 conn = db.connection(section='reiner')
 
-normalise = 1020.0  # If None: normalisation with maximum calm lenght
+scale_parameter = 1020.0  # If None: standardization with maximum calm lenght
 # Specification of the weather data set CoastDat2
 coastDat2 = {
     'dhi': 0,
@@ -52,34 +53,45 @@ wind_feedin = get_data(power_plant=E126, multi_weather=multi_weather,
                        filename='windfeedin_pickle_{0}.p'.format(year),
                        data_type='wind_feedin')
 
-# ------------------------------ Calculations ------------------------------- #
+# -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
 print('Calculating calms...')
-calms_max, calms_min = calculate_calms(multi_weather, E126, power_limit,
-                                       wind_feedin)
+calms_max, calms_min = {}, {}
+for i in range(len(power_limit)):
+    calms_max[i], calms_min[i] = calculate_calms(multi_weather, E126,
+                                                 power_limit[i], wind_feedin)
+    # Geoplot of longest calms of each location
+    legend_label = ('Longest calms Germany {0} power limit < {1}%'.format(
+        year, int(power_limit[i]*100)))
+    coastdat_geoplot(calms_max[i], conn, show_plot=True,
+                     legend_label=legend_label,
+                     filename_plot='Longest_calms_{0}_{1}_std_2011.png'.format(
+                         year, power_limit[i]),
+                     save_figure=True, scale_parameter=scale_parameter)
+    coastdat_geoplot(calms_max[i], conn, show_plot=True,
+                     legend_label=legend_label,
+                     filename_plot='Longest_calms_{0}_{1}.png'.format(
+                         year, power_limit[i]),
+                     save_figure=True)  # scaled to maximum of calms
+    # Histogram containing longest calms of each location
+    legend_label = 'Calm histogram Germany{0} power limit < {1}%'.format(
+        year, int(power_limit[i]*100))
+    plot_histogram(calms_max[i], show_plot=True, legend_label=legend_label,
+                   xlabel='Length of calms in h', ylabel='Number of calms',
+                   filename_plot='Calm_histogram_{0}_{1}.png'.format(
+                       year, power_limit[i]),
+                   save_figure=True)
 
-# Calculate average wind speed
+# --------------------------- Average wind speed ---------------------------- #
+print('Calculating average wind speed...')
 wind_speed = calculate_avg_wind_speed(multi_weather)
-
-# ---------------------------------- Plots ---------------------------------- #
-
-print('Creating plots...')
 # Geoplot of average wind speed of each location
 legend_label = 'Average wind speed_{0}'.format(year)
 coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Average_wind_speed_{0}'.format(year),
                  save_figure=True)
-# Geoplot of longest calms of each location
-legend_label = 'Longest calms Germany {0}'.format(year)
-coastdat_geoplot(calms_max, conn, show_plot=True, legend_label=legend_label,
-                 filename_plot='Longest_calms_{0}'.format(year),
-                 save_figure=True, scale_parameter=1020.0)
-# Histogram containing longest calms of each location
-legend_label = 'Calm histogram Germany{0}'.format(year)
-plot_histogram(calms_max, show_plot=True, legend_label=legend_label,
-               xlabel='Length of calms in h', ylabel='Number of calms',
-               filename_plot='Calm_histogram_{0}'.format(year),
-               save_figure=True)
+
+# ---------------------------- Jahresdauerlinie ----------------------------- #
 # Plot of "Jahresdauerlinie"
 legend_label = 'Annual power duration curve {0}'.format(year)  # TODO: Jahresdauerlinie = Annual power duration curve??
 plot_power_duration_curve(wind_feedin[1114110], show_plot=True,
