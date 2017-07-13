@@ -7,7 +7,7 @@ plt.style.use('ggplot')
 from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_multiweather,
                          calculate_avg_wind_speed, coastdat_geoplot,
-                         calculate_calms)
+                         calculate_calms, plot_histogram)
 
 # Set parameters
 year = 2011  # 1998 - 2014
@@ -63,3 +63,8 @@ legend_label = 'Longest calms Germany {0}'.format(year)
 coastdat_geoplot(calms_1, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Longest_calms_{0}'.format(year),
                  save_figure=True, scale_parameter=1020.0)
+legend_label = 'Calm histogram Germany{0}'.format(year)
+plot_histogram(calms_1, show_plot=True, legend_label=legend_label,
+               xlabel='Length of calms in h', ylabel='Number of calms',
+               filename_plot='Calm_histogram_{0}'.format(year),
+               save_figure=True)

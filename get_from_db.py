@@ -139,6 +139,30 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     return
 
 
+def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
+                   ylabel=None, filename_plot='plot_histogram.png',
+                   save_figure=True):
+    """ calms should have the coastdat region gid as index and the values
+    that are plotted in the column 'results'.
+    Histogram contains longest calms of each location.
+    """
+    # sort calms
+    calms_3 = np.sort(np.array(calms['results']))
+    # plot
+    fig = plt.figure()
+    plt.hist(calms_3, normed=False, range=(np.array(calms).min(),
+                                           np.array(calms).max()))
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(legend_label)
+    if show_plot:
+        plt.show()
+    if save_figure:
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+    fig.set_tight_layout(True)
+    plt.close()
+
 if __name__ == "__main__":
 
     year = 2011
