@@ -59,12 +59,14 @@ def calculate_avg_wind_speed(multi_weather):
 
 def calculate_calms(multi_weather, power_plant, power_limit):
     """
-    Collecting calm vectors in dictionary vector_coll
-    Loop over all weather objects to find the longest calms for each region.
+    Collecting calm vectors in dictionary vector_coll.
+    Loop over all weather objects to find the longest/shortest calms for each
+    region.
     Returns DataFrame.
     """
     vector_coll = {}
-    calms_1 = {}
+    calms_max = {}
+    calms_min = {}
     for i in range(len(multi_weather)):
         wind_feedin = power_plant.feedin(weather=multi_weather[i],
                                          installed_capacity=1)
@@ -72,11 +74,14 @@ def calculate_calms(multi_weather, power_plant, power_limit):
         # find all calm periods
         vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
         # find the longest calm from all periods
-        calm = len(max(vector_coll, key=len))
-        calms_1[multi_weather[i].name] = calm
+        maximum = len(max(vector_coll, key=len))
+        calms_max[multi_weather[i].name] = maximum
+        minimum = len(min(vector_coll, key=len))
+        calms_min[multi_weather[i].name] = minimum
     # Create DataFrames
-    calms_1 = pd.DataFrame(data=calms_1, index=['results']).transpose()
-    return calms_1
+    calms_max = pd.DataFrame(data=calms_max, index=['results']).transpose()
+    calms_min = pd.DataFrame(data=calms_min, index=['results']).transpose()
+    return calms_max, calms_min
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
