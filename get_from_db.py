@@ -37,14 +37,21 @@ def fetch_shape_germany(conn):
     return conn.execute(sql_str).fetchall()[0]
 
 
-def get_multiweather(conn, year=None, geom=None, pickle_load=True,
-                     filename='multiweather_pickle.p'):
+def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
+             geom=None, pickle_load=True, filename='pickle_dump.p',
+             data_type='multi_weather'):
     if not pickle_load:
-        multi_weather = coastdat.get_weather(conn, geom, year)
-        pickle.dump(multi_weather, open(filename, 'wb'))
+        if data_type == 'multi_weather':
+            data = coastdat.get_weather(conn, geom, year)
+        if data_type == 'wind_feedin':
+            data = {}
+            for i in range(len(multi_weather)):
+                data[multi_weather[i].name] = power_plant.feedin(
+                    weather=multi_weather[i], installed_capacity=1)
+        pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
-        multi_weather = pickle.load(open(filename, 'rb'))
-    return multi_weather
+        data = pickle.load(open(filename, 'rb'))
+    return data
 
 
 def calculate_avg_wind_speed(multi_weather):
@@ -57,7 +64,7 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def calculate_calms(multi_weather, power_plant, power_limit):
+def calculate_calms(multi_weather, power_plant, power_limit, wind_feedin):
     """
     Collecting calm vectors in dictionary vector_coll.
     Loop over all weather objects to find the longest/shortest calms for each
@@ -68,9 +75,8 @@ def calculate_calms(multi_weather, power_plant, power_limit):
     calms_max = {}
     calms_min = {}
     for i in range(len(multi_weather)):
-        wind_feedin = power_plant.feedin(weather=multi_weather[i],
-                                         installed_capacity=1)
-        calm, = np.where(wind_feedin < power_limit)  # defines the calm
+        # define calm
+        calm, = np.where(wind_feedin[multi_weather[i].name] < power_limit)
         # find all calm periods
         vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
         # find the longest calm from all periods
