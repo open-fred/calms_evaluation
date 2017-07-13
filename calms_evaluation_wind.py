@@ -23,6 +23,7 @@ geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
     #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
 
 # get multiweather
+print(' ')
 print('Collecting weather objects...')
 multi_weather = get_multiweather(conn, year=year,
                                  geom=geom[0],
@@ -56,9 +57,10 @@ wind_speed = calculate_avg_wind_speed(multi_weather)
 
 # plots
 print('Creating plots...')
-legend_label = 'Average wind speed'
+legend_label = 'Average wind speed_{0}'.format(year)
 coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
-                 filename_plot='Average_wind_speed', save_figure=True)
+                 filename_plot='Average_wind_speed_{0}'.format(year),
+                 save_figure=True)
 legend_label = 'Longest calms Germany {0}'.format(year)
 coastdat_geoplot(calms_1, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Longest_calms_{0}'.format(year),
