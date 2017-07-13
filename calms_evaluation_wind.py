@@ -58,7 +58,7 @@ wind_speed = calculate_avg_wind_speed(multi_weather)
 print('Creating plots...')
 legend_label = 'Average wind speed'
 coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
-                 filename_plot='plot.png', save_figure=True)
+                 filename_plot='Average_wind_speed', save_figure=True)
 legend_label = 'Longest calms Germany {0}'.format(year)
 coastdat_geoplot(calms_1, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Longest_calms_{0}'.format(year),

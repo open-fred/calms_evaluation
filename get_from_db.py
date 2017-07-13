@@ -6,6 +6,7 @@ import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
+import os
 
 
 def fetch_geometries(conn, **kwargs):
@@ -127,7 +128,8 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     if show_plot:
         plt.show()
     if save_figure:
-        fig.savefig(filename_plot)
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
     return
 
 
