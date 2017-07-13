@@ -10,8 +10,9 @@ import os
 
 
 def fetch_geometries(conn, **kwargs):
-    """Reads the geometry and the id of all given tables and writes it to
-     the 'geom'-key of each branch of the data tree.
+    """
+    Reads the geometry and the id of all given tables and writes it to
+    the 'geom'-key of each branch of the data tree.
     """
     sql_str = '''
         SELECT {id_col}, ST_AsText(
@@ -57,8 +58,11 @@ def calculate_avg_wind_speed(multi_weather):
 
 
 def calculate_calms(multi_weather, power_plant, power_limit):
-    # Collecting calm vectors in dictionary vector_coll
-    # Loop over 792 weather objects to find the longest calms for each region
+    """
+    Collecting calm vectors in dictionary vector_coll
+    Loop over all weather objects to find the longest calms for each region.
+    Returns DataFrame.
+    """
     vector_coll = {}
     calms_1 = {}
     for i in range(len(multi_weather)):
@@ -78,9 +82,11 @@ def calculate_calms(multi_weather, power_plant, power_limit):
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
                      cmapname='inferno', scale_parameter=None):
-    # results_df should have the coastdat region gid as index and the values
-    # that are plotted (average wind speed, calm length, etc.) in the column
-    # 'results'
+    """
+    results_df should have the coastdat region gid as index and the values
+    that are plotted (average wind speed, calm length, etc.) in the column
+    'results'
+    """
     fig = plt.figure()
     # plot coastdat cells with results
     coastdat_de = {
