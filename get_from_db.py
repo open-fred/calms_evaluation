@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
 import os
+import numpy as np
 
 
 def fetch_geometries(conn, **kwargs):
@@ -166,6 +167,35 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(legend_label)
+    if show_plot:
+        plt.show()
+    if save_figure:
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+    fig.set_tight_layout(True)
+    plt.close()
+
+
+def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
+                              xlabel=None, ylabel=None,
+                              filename_plot='plot_annual_curve.png',
+                              save_figure=True):
+    """
+    Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
+    time series.
+    """
+#    for i in range(len(wind_feedin)):
+        # Sort feedin
+    feedin_sorted = np.sort(np.array(wind_feedin))
+    # Plot
+    fig = plt.figure()
+    plt.plot(feedin_sorted)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(legend_label)
+    # plt.yticks(np.arange(0, 0.1, 5))
+    plt.ylim(ymax=0.1)
+    plt.xlim(xmax=2500)
     if show_plot:
         plt.show()
     if save_figure:

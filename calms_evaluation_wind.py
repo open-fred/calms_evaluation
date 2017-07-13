@@ -5,15 +5,15 @@ import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 from feedinlib import powerplants as plants
-from get_from_db import (fetch_shape_germany, get_data,
-                         calculate_avg_wind_speed, coastdat_geoplot,
-                         calculate_calms, plot_histogram)
+from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
+                         calculate_avg_wind_speed, calculate_calms,
+                         plot_histogram, plot_power_duration_curve)
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
 power_limit = 0.05  # defined the power limit for the calms in %
 load_multi_weather = True  # False if you use a year you haven't dumped yet
-load_wind_feedin = False  # False if you use a year you haven't dumped yet
+load_wind_feedin = True  # False if you use a year you haven't dumped yet
 conn = db.connection(section='reiner')
 
 normalise = 1020.0  # If None: normalisation with maximum calm lenght
@@ -82,3 +82,10 @@ plot_histogram(calms_max, show_plot=True, legend_label=legend_label,
                xlabel='Length of calms in h', ylabel='Number of calms',
                filename_plot='Calm_histogram_{0}'.format(year),
                save_figure=True)
+# Plot of "Jahresdauerlinie"
+legend_label = 'Annual power duration curve {0}'.format(year)  # TODO: Jahresdauerlinie = Annual power duration curve??
+plot_power_duration_curve(wind_feedin[1114110], show_plot=True,
+                          legend_label=None, xlabel='Hours of the year in h',
+                          ylabel='Normalised power output',
+                          filename_plot='Power_duration_curve_{0}_1114110'.format(year),
+                          save_figure=True)
