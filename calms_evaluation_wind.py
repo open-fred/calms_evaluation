@@ -1,6 +1,4 @@
 import oemof.db as db
-import pandas as pd
-import numpy as np
 import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
