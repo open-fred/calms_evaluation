@@ -55,13 +55,11 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def calculate_calms(multi_weather, power_plant, power_limit, normalise=None):
+def calculate_calms(multi_weather, power_plant, power_limit):
     # Collecting calm vectors in dictionary vector_coll
     # Loop over 792 weather objects to find the longest calms for each region
     vector_coll = {}
     calms_1 = {}
-    calms_2 = {}
-    calms_3 = {}
     for i in range(len(multi_weather)):
         wind_feedin = power_plant.feedin(weather=multi_weather[i],
                                          installed_capacity=1)
@@ -71,21 +69,14 @@ def calculate_calms(multi_weather, power_plant, power_limit, normalise=None):
         # find the longest calm from all periods
         calm = len(max(vector_coll, key=len))
         calms_1[multi_weather[i].name] = calm
-        # normalise calms
-        if not normalise:
-            normalise = calms_1.max(axis=0)
-        calms_2[multi_weather[i].name] = (calms_1[multi_weather[i].name] /
-                                          normalise)
     # Create DataFrames
     calms_1 = pd.DataFrame(data=calms_1, index=['results']).transpose()
-    calms_2 = pd.DataFrame(data=calms_2, index=['results']).transpose()
-    # sort calms
-    calms_3 = np.sort(np.array(calms_1['results']))
-    return calms_1, calms_2, calms_3
+    return calms_1
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
-                     filename_plot='plot.png', save_figure=True):
+                     filename_plot='plot.png', save_figure=True,
+                     cmapname='inferno', scale_parameter=None):
     # results_df should have the coastdat region gid as index and the values
     # that are plotted (average wind speed, calm length, etc.) in the column
     # 'results'
@@ -105,15 +96,15 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     coastdat_de = coastdat_de.set_index('gid')  # set gid as index
     coastdat_de = coastdat_de.join(results_df)  # join results
     # scale results
-    coastdat_de['results_scaled'] = coastdat_de['results'] / max(
-        coastdat_de['results'].dropna())
-
+    if not scale_parameter:
+        scale_parameter = max(coastdat_de['results'].dropna())
+    coastdat_de['results_scaled'] = coastdat_de['results'] / scale_parameter
     coastdat_plot = geoplot.GeoPlotter(
         geom=coastdat_de['geom'], bbox=(3, 16, 47, 56),
-        data=coastdat_de['results_scaled'], color='data', cmapname='afmhot_r')
+        data=coastdat_de['results_scaled'], color='data', cmapname=cmapname)
     coastdat_plot.plot(edgecolor='')
     coastdat_plot.draw_legend(legendlabel=legend_label,
-        interval=(0, int(max(coastdat_de['results'].dropna()))))
+        interval=(0, int(scale_parameter)))
 
     # plot Germany with regions
     germany = {

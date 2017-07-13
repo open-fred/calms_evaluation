@@ -49,8 +49,7 @@ enerconE126 = {
 # Initialise wind turbine
 E126 = plants.WindPowerPlant(**enerconE126)
 # Calculate calms
-calms_1, calms_2, calms_3 = calculate_calms(multi_weather, E126,
-                                            power_limit, normalise)
+calms_1 = calculate_calms(multi_weather, E126, power_limit)
 
 # calculate average wind speed
 wind_speed = calculate_avg_wind_speed(multi_weather)
@@ -62,4 +61,5 @@ coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='plot.png', save_figure=True)
 legend_label = 'Longest calms Germany {0}'.format(year)
 coastdat_geoplot(calms_1, conn, show_plot=True, legend_label=legend_label,
-                 filename_plot='plot2.png', save_figure=True)
+                 filename_plot='Longest_calms_{0}'.format(year),
+                 save_figure=True, scale_parameter=1020.0)
