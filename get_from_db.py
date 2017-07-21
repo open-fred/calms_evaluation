@@ -68,7 +68,7 @@ def create_calm_dict(power_limit, wind_feedin):
     """
     Creates a Dictonary containing entries for all locations with the wind
     feedin time series (column 'feedin_wind_pp') and information about calms
-    (column 'calm' - calm: wind feedin, no calm: 0)
+    (column 'calm' - calm: wind feedin, no calm: 'no_calm')
     """
     calms_dict = {}
     for key in wind_feedin:
