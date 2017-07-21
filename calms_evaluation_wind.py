@@ -57,19 +57,19 @@ wind_feedin = get_data(power_plant=E126, multi_weather=multi_weather,
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
 print('Calculating calms...')
-calms_max, calms_min = {}, {}
 for i in range(len(power_limit)):
-    calms_max[i], calms_min[i] = calculate_calms(multi_weather, E126,
-                                                 power_limit[i], wind_feedin)
+    # Get all calms
+    calms_dict = create_calm_dict(power_limit[i], wind_feedin)
     # Geoplot of longest calms of each location
+    calms_max, calms_min, calm_lengths = calculate_calms(calms_dict)
     legend_label = ('Longest calms Germany {0} power limit < {1}%'.format(
         year, int(power_limit[i]*100)))
-    coastdat_geoplot(calms_max[i], conn, show_plot=True,
+    coastdat_geoplot(calms_max, conn, show_plot=True,
                      legend_label=legend_label,
                      filename_plot='Longest_calms_{0}_{1}_std_2011.png'.format(
                          year, power_limit[i]),
                      save_figure=True, scale_parameter=scale_parameter)
-    coastdat_geoplot(calms_max[i], conn, show_plot=True,
+    coastdat_geoplot(calms_max, conn, show_plot=True,
                      legend_label=legend_label,
                      filename_plot='Longest_calms_{0}_{1}.png'.format(
                          year, power_limit[i]),
@@ -77,7 +77,7 @@ for i in range(len(power_limit)):
     # Histogram containing longest calms of each location
     legend_label = 'Calm histogram Germany{0} power limit < {1}%'.format(
         year, int(power_limit[i]*100))
-    plot_histogram(calms_max[i], show_plot=True, legend_label=legend_label,
+    plot_histogram(calms_max, show_plot=True, legend_label=legend_label,
                    xlabel='Length of calms in h', ylabel='Number of calms',
                    filename_plot='Calm_histogram_{0}_{1}.png'.format(
                        year, power_limit[i]),
