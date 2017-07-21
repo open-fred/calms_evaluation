@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
 import os
-import numpy as np
 
 
 def fetch_geometries(conn, **kwargs):
@@ -68,8 +67,8 @@ def calculate_avg_wind_speed(multi_weather):
 def create_calm_dict(power_limit, wind_feedin):
     """
     Creates a Dictonary containing entries for all locations with the wind
-    feedin time series (column 'feedin_wind_pp') and information about calms (column 'calm' -
-    calm: wind feedin, no calm: 0)
+    feedin time series (column 'feedin_wind_pp') and information about calms
+    (column 'calm' - calm: wind feedin, no calm: 0)
     """
     calms_dict = {}
     for key in wind_feedin:
@@ -84,7 +83,8 @@ def create_calm_dict(power_limit, wind_feedin):
 
 def calculate_calms(calms_dict):
     """
-    Returns the calm lengths of all the calms at each location and finds the longest and shortest calm from all the calms at each location.
+    Returns the calm lengths of all the calms at each location and finds the
+    longest and shortest calm from all the calms at each location.
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
@@ -92,7 +92,8 @@ def calculate_calms(calms_dict):
         calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Write the calm lengths into array of dictionary calm_lengths
-        calm_lengths[key] = np.array([len(calm_arrays[i]) for i in range(len(calm_arrays))])
+        calm_lengths[key] = np.array([len(calm_arrays[i])
+                                     for i in range(len(calm_arrays))])
         # Find the longest and shortest calm from all periods
         maximum = max(calm_lengths[key])
         calms_max[key] = maximum
@@ -106,11 +107,13 @@ def calculate_calms(calms_dict):
 
 def calms_frequency(calm_lengths, min_length):
     """
-    Write frequency of calms with length >= min_length into arrays for each location
+    Write frequency of calms with length >= min_length into arrays for each
+    location.
     """
     calms_freq = {}
     for key in calm_lengths:
-        calms_freq[key] = np.compress((calm_lengths[key] >= min_length), calm_lengths[key]).size
+        calms_freq[key] = np.compress((calm_lengths[key] >= min_length),
+                                      calm_lengths[key]).size
     calms_freq = pd.DataFrame(data=calms_freq, index=['results']).transpose()
     return calms_freq
 
