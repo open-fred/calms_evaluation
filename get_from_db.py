@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
 import os
+import numpy as np
 
 
 def fetch_geometries(conn, **kwargs):
@@ -37,14 +38,21 @@ def fetch_shape_germany(conn):
     return conn.execute(sql_str).fetchall()[0]
 
 
-def get_multiweather(conn, year=None, geom=None, pickle_load=True,
-                     filename='multiweather_pickle.p'):
+def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
+             geom=None, pickle_load=True, filename='pickle_dump.p',
+             data_type='multi_weather'):
     if not pickle_load:
-        multi_weather = coastdat.get_weather(conn, geom, year)
-        pickle.dump(multi_weather, open(filename, 'wb'))
+        if data_type == 'multi_weather':
+            data = coastdat.get_weather(conn, geom, year)
+        if data_type == 'wind_feedin':
+            data = {}
+            for i in range(len(multi_weather)):
+                data[multi_weather[i].name] = power_plant.feedin(
+                    weather=multi_weather[i], installed_capacity=1)
+        pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
-        multi_weather = pickle.load(open(filename, 'rb'))
-    return multi_weather
+        data = pickle.load(open(filename, 'rb'))
+    return data
 
 
 def calculate_avg_wind_speed(multi_weather):
@@ -57,26 +65,54 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def calculate_calms(multi_weather, power_plant, power_limit):
+def create_calm_dict(power_limit, wind_feedin):
     """
-    Collecting calm vectors in dictionary vector_coll
-    Loop over all weather objects to find the longest calms for each region.
-    Returns DataFrame.
+    Creates a Dictonary containing entries for all locations with the wind
+    feedin time series (column 'feedin_wind_pp') and information about calms (column 'calm' -
+    calm: wind feedin, no calm: 0)
     """
-    vector_coll = {}
-    calms_1 = {}
-    for i in range(len(multi_weather)):
-        wind_feedin = power_plant.feedin(weather=multi_weather[i],
-                                         installed_capacity=1)
-        calm, = np.where(wind_feedin < power_limit)  # defines the calm
-        # find all calm periods
-        vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
-        # find the longest calm from all periods
-        calm = len(max(vector_coll, key=len))
-        calms_1[multi_weather[i].name] = calm
-    # Create DataFrames
-    calms_1 = pd.DataFrame(data=calms_1, index=['results']).transpose()
-    return calms_1
+    calms_dict = {}
+    for key in wind_feedin:
+        feedin = pd.DataFrame(data=wind_feedin[key])
+        # Find calms
+        calms = feedin.where(feedin < power_limit, other='no_calm')
+        calms.columns = ['calm']
+        calms_dict[key] = pd.concat([feedin, calms],
+                                    axis=1)  # brings columns to the same level
+    return calms_dict
+
+
+def calculate_calms(calms_dict):
+    """
+    Returns the calm lengths of all the calms at each location and finds the longest and shortest calm from all the calms at each location.
+    """
+    calms_max, calms_min, calm_lengths = {}, {}, {}
+    for key in calms_dict:
+        # Find calm periods
+        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
+        # Write the calm lengths into array of dictionary calm_lengths
+        calm_lengths[key] = np.array([len(calm_arrays[i]) for i in range(len(calm_arrays))])
+        # Find the longest and shortest calm from all periods
+        maximum = max(calm_lengths[key])
+        calms_max[key] = maximum
+        minimum = min(calm_lengths[key])
+        calms_min[key] = minimum
+    # Create DataFrame
+    calms_max = pd.DataFrame(data=calms_max, index=['results']).transpose()
+    calms_min = pd.DataFrame(data=calms_min, index=['results']).transpose()
+    return calms_max, calms_min, calm_lengths
+
+
+def calms_frequency(calm_lengths, min_length):
+    """
+    Write frequency of calms with length >= min_length into arrays for each location
+    """
+    calms_freq = {}
+    for key in calm_lengths:
+        calms_freq[key] = np.compress((calm_lengths[key] >= min_length), calm_lengths[key]).size
+    calms_freq = pd.DataFrame(data=calms_freq, index=['results']).transpose()
+    return calms_freq
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
@@ -147,14 +183,44 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     Histogram contains longest calms of each location.
     """
     # sort calms
-    calms_3 = np.sort(np.array(calms['results']))
+    calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_3, normed=False, range=(np.array(calms).min(),
-                                           np.array(calms).max()))
+    plt.hist(calms_sorted, normed=False, range=(calms_sorted.min(),
+                                                calms_sorted.max()))
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.ylim(ymax=400)
+    plt.xlim(xmax=1200)
+    plt.title(legend_label)
+    if show_plot:
+        plt.show()
+    if save_figure:
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+    fig.set_tight_layout(True)
+    plt.close()
+
+
+def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
+                              xlabel=None, ylabel=None,
+                              filename_plot='plot_annual_curve.png',
+                              save_figure=True):
+    """
+    Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
+    time series.
+    """
+#    for i in range(len(wind_feedin)):
+    # Sort feedin
+    feedin_sorted = np.sort(np.array(wind_feedin))
+    # Plot
+    fig = plt.figure()
+    plt.plot(feedin_sorted)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(legend_label)
+    plt.ylim(ymax=0.1)
+    plt.xlim(xmax=2500)
     if show_plot:
         plt.show()
     if save_figure:
@@ -176,10 +242,9 @@ if __name__ == "__main__":
     #geom = [geopy.Polygon(
         #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
     # get multiweather
-    multi_weather = get_multiweather(conn, year=year,
-                                     geom=geom[0],
-                                     pickle_load=pickle_load,
-                                     filename='multiweather_pickle.p')
+    multi_weather = get_data(conn, year=year, geom=geom[0],
+                             pickle_load=pickle_load,
+                             filename='multiweather_pickle.p')
     # calculate average wind speed
     calc = calculate_avg_wind_speed(multi_weather)
 
