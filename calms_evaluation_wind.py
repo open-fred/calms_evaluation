@@ -74,6 +74,17 @@ for i in range(len(power_limit)):
                      filename_plot='Longest_calms_{0}_{1}.png'.format(
                          year, power_limit[i]),
                      save_figure=True)  # scaled to maximum of calms
+    # Geoplot of calm lengths > certain calm length (min_lengths)
+    min_lengths = [24.0, 7*24.0, 31*24.0]
+    for j in range(len(min_lengths)):
+        frequencies = calms_frequency(calm_lengths, min_lengths[j])
+        legend_label = ('Frequency of calms >= {0} h in {1} power limit < {2}%'.format(int(min_lengths[j]),
+            year, int(power_limit[i] * 100)))
+        coastdat_geoplot(frequencies, conn, show_plot=True,
+                         legend_label=legend_label,
+                         filename_plot='Frequency_{0}h_{1}_{2}.png'.format(int(min_lengths[j]),
+                             year, power_limit[i]),
+                         save_figure=True)
     # Histogram containing longest calms of each location
     legend_label = 'Calm histogram Germany{0} power limit < {1}%'.format(
         year, int(power_limit[i]*100))
