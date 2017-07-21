@@ -200,7 +200,7 @@ def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
     time series.
     """
 #    for i in range(len(wind_feedin)):
-        # Sort feedin
+    # Sort feedin
     feedin_sorted = np.sort(np.array(wind_feedin))
     # Plot
     fig = plt.figure()
