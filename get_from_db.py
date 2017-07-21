@@ -65,30 +65,43 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def calculate_calms(multi_weather, power_plant, power_limit, wind_feedin):
+def create_calm_dict(power_limit, wind_feedin):
     """
-    Collecting calm vectors in dictionary vector_coll.
-    Loop over all weather objects to find the longest/shortest calms for each
-    region.
-    Returns DataFrame.
+    Creates a Dictonary containing entries for all locations with the wind
+    feedin time series (column 'feedin_wind_pp') and information about calms (column 'calm' -
+    calm: wind feedin, no calm: 0)
     """
-    vector_coll = {}
-    calms_max = {}
-    calms_min = {}
-    for i in range(len(multi_weather)):
-        # define calm
-        calm, = np.where(wind_feedin[multi_weather[i].name] < power_limit)
-        # find all calm periods
-        vector_coll = np.split(calm, np.where(np.diff(calm) != 1)[0] + 1)
-        # find the longest calm from all periods
-        maximum = len(max(vector_coll, key=len))
-        calms_max[multi_weather[i].name] = maximum
-        minimum = len(min(vector_coll, key=len))
-        calms_min[multi_weather[i].name] = minimum
-    # Create DataFrames
+    calms_dict = {}
+    for key in wind_feedin:
+        feedin = pd.DataFrame(data=wind_feedin[key])
+        # Find calms
+        calms = feedin.where(feedin < power_limit, other='no_calm')
+        calms.columns = ['calm']
+        calms_dict[key] = pd.concat([feedin, calms],
+                                    axis=1)  # brings columns to the same level
+    return calms_dict
+
+
+def calculate_calms(calms_dict):
+    """
+    Returns the calm lengths of all the calms at each location and finds the longest and shortest calm from all the calms at each location.
+    """
+    calms_max, calms_min, calm_lengths = {}, {}, {}
+    for key in calms_dict:
+        # Find calm periods
+        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
+        # Write the calm lengths into array of dictionary calm_lengths
+        calm_lengths[key] = np.array([len(calm_arrays[i]) for i in range(len(calm_arrays))])
+        # Find the longest and shortest calm from all periods
+        maximum = max(calm_lengths[key])
+        calms_max[key] = maximum
+        minimum = min(calm_lengths[key])
+        calms_min[key] = minimum
+    # Create DataFrame
     calms_max = pd.DataFrame(data=calms_max, index=['results']).transpose()
     calms_min = pd.DataFrame(data=calms_min, index=['results']).transpose()
-    return calms_max, calms_min
+    return calms_max, calms_min, calm_lengths
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
