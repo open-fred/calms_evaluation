@@ -104,6 +104,17 @@ def calculate_calms(calms_dict):
     return calms_max, calms_min, calm_lengths
 
 
+def calms_frequency(calm_lengths, min_length):
+    """
+    Write frequency of calms with length >= min_length into arrays for each location
+    """
+    calms_freq = {}
+    for key in calm_lengths:
+        calms_freq[key] = np.compress((calm_lengths[key] >= min_length), calm_lengths[key]).size
+    calms_freq = pd.DataFrame(data=calms_freq, index=['results']).transpose()
+    return calms_freq
+
+
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
                      cmapname='inferno', scale_parameter=None):
