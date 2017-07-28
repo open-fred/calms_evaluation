@@ -66,9 +66,10 @@ def calculate_avg_wind_speed(multi_weather):
 
 def create_calm_dict(power_limit, wind_feedin):
     """
-    Creates a Dictonary containing entries for all locations with the wind
-    feedin time series (column 'feedin_wind_pp') and information about calms
-    (column 'calm' - calm: wind feedin, no calm: 'no_calm')
+    Creates a Dictonary containing DataFrames for all locations (keys: gid of
+    locations) with the wind feedin time series (column 'feedin_wind_pp') and
+    information about calms (column 'calm' - calm: value of wind feedin,
+    no calm: 'no_calm').
     """
     calms_dict = {}
     for key in wind_feedin:
@@ -85,6 +86,16 @@ def calculate_calms(calms_dict):
     """
     Returns the calm lengths of all the calms at each location and finds the
     longest and shortest calm from all the calms at each location.
+
+    Returns
+    -------
+    calms_max : DataFrame
+        index: gid of location, data: longest calm of location
+    calms_min : DataFrame
+        index: gid of location, data: shortest calm of location
+    calm_lengths : Dictionary
+        keys: gid of weather location, data: array
+        Length of the single calms for each location
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
