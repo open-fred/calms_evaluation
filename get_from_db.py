@@ -118,6 +118,31 @@ def calms_frequency(calm_lengths, min_length):
     return calms_freq
 
 
+def filter_peaks(calms_dict, power_limit):
+    """
+    Find calms while peaks are filtered out using a running average.
+    """
+    calms_dict_filtered = calms_dict
+    for key in calms_dict:
+        # Find calm periods
+        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
+        # Filter out peaks
+        feedin = calms_dict[key]['feedin_wind_pp']
+        i = 0
+        while i <= (len(calm_arrays) - 1):
+            j = i + 1
+            if j > (len(calm_arrays) - 1):
+                break
+            while sum(feedin[calm_arrays[i][0] : calm_arrays[j][-1] + 1])/len(feedin[calm_arrays[i][0] : calm_arrays[j][-1] + 1]) < power_limit:
+                j = j + 1
+                if j > (len(calm_arrays) - 1):
+                    break
+            calms_dict_filtered[key]['calm'][calm_arrays[i][0] : calm_arrays[j-1][-1] + 1] = calms_dict[key]['feedin_wind_pp'][calm_arrays[i][0] : calm_arrays[j-1][-1] + 1]
+            i = j
+    return calms_dict_filtered
+
+
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
                      cmapname='inferno', scale_parameter=None):
