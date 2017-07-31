@@ -63,7 +63,7 @@ for i in range(len(power_limit)):
     calms_dict = create_calms_dict(power_limit[i], wind_feedin)
     # Get all calms with filtered peaks
     calms_dict_filtered = filter_peaks(calms_dict, power_limit[i])
-    print('Making plots...')
+    # Plots
     dict_list = [calms_dict, calms_dict_filtered]
     for k in range(len(dict_list)):
         if k == 0:
