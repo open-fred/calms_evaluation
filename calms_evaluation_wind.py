@@ -2,6 +2,7 @@ import oemof.db as db
 import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
+# import time
 from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
@@ -58,6 +59,7 @@ wind_feedin = get_data(power_plant=E126, multi_weather=multi_weather,
 # Calculate calms
 print('Calculating calms...')
 for i in range(len(power_limit)):
+    # t0 = time.clock()
     print('  ...with power limit: ' + str(int(power_limit[i]*100)) + '%')
     # Get all calms
     calms_dict = create_calms_dict(power_limit[i], wind_feedin)
@@ -107,6 +109,7 @@ for i in range(len(power_limit)):
                        filename_plot='Calm_histogram_{0}_{1}'.format(
                            year, power_limit[i]) + string + '.png',
                        save_figure=True)
+        # print(str(time.clock() - t0) + ' seconds since t0')
 
 # --------------------------- Average wind speed ---------------------------- #
 print('Calculating average wind speed...')
