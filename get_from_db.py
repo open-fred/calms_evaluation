@@ -134,12 +134,13 @@ def filter_peaks(calms_dict, power_limit):
     """
     Filteres the peaks from the calms using a running average.
     """
-    for key in calms_dict:
+    calms_dict_filtered = calms_dict.copy()
+    for key in calms_dict_filtered:
         # Find calm periods
-        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calms, = np.where(calms_dict_filtered[key]['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Filter out peaks
-        df = calms_dict[key]
+        df = calms_dict_filtered[key]
         feedin_arr = np.array(df['feedin_wind_pp'])
         calm_arr = np.array(df['calm'])
         i = 0
@@ -157,8 +158,8 @@ def filter_peaks(calms_dict, power_limit):
                 calm_arrays[i][0]:calm_arrays[j-1][-1] + 1]
             i = j
         df['calm'] = calm_arr
-        calms_dict[key] = df
-    return calms_dict
+        calms_dict_filtered[key] = df
+    return calms_dict_filtered
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
