@@ -86,7 +86,7 @@ for i in range(len(power_limit)):
                              year, power_limit[i]) + string + '.png',
                          save_figure=True)  # scaled to maximum of calms
         # Geoplot of calm lengths > certain calm length (min_lengths)
-        min_lengths = [24.0, 7*24.0, 31*24.0]
+        min_lengths = [24.0, 7*24.0]
         for j in range(len(min_lengths)):
             frequencies = calms_frequency(calm_lengths, min_lengths[j])
             legend_label = ('Frequency of calms >= ' +
