@@ -66,9 +66,10 @@ def calculate_avg_wind_speed(multi_weather):
 
 def create_calms_dict(power_limit, wind_feedin):
     """
-    Creates a Dictonary containing entries for all locations with the wind
-    feedin time series (column 'feedin_wind_pp') and information about calms
-    (column 'calm' - calm: wind feedin, no calm: 0)
+    Creates a Dictonary containing DataFrames for all locations (keys: gid of
+    locations) with the wind feedin time series (column 'feedin_wind_pp') and
+    information about calms (column 'calm' - calm: value of wind feedin,
+    no calm: 'no_calm').
     """
     calms_dict = {}
     for key in wind_feedin:
@@ -85,6 +86,16 @@ def calculate_calms(calms_dict):
     """
     Returns the calm lengths of all the calms at each location and finds the
     longest and shortest calm from all the calms at each location.
+
+    Returns
+    -------
+    calms_max : DataFrame
+        index: gid of location, data: longest calm of location
+    calms_min : DataFrame
+        index: gid of location, data: shortest calm of location
+    calm_lengths : Dictionary
+        keys: gid of weather location, data: array
+        Length of the single calms for each location
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
@@ -222,12 +233,11 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, normed=False, range=(calms_sorted.min(),
-                                                calms_sorted.max()))
+    plt.hist(calms_sorted, bins=np.arange(0, 1200, 50), normed=False)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.ylim(ymax=400)
-    plt.xlim(xmax=1200)
+    plt.xticks(np.linspace(0, 1200, 13, endpoint=True))
+    # plt.ylim(ymax=400) TODO: set ylim for comparison to hightest level
     plt.title(legend_label)
     if show_plot:
         plt.show()
@@ -238,32 +248,32 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     plt.close()
 
 
-def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
-                              xlabel=None, ylabel=None,
-                              filename_plot='plot_annual_curve.png',
-                              save_figure=True):
-    """
-    Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
-    time series.
-    """
-#    for i in range(len(wind_feedin)):
-    # Sort feedin
-    feedin_sorted = np.sort(np.array(wind_feedin))
-    # Plot
-    fig = plt.figure()
-    plt.plot(feedin_sorted)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(legend_label)
-    plt.ylim(ymax=0.1)
-    plt.xlim(xmax=2500)
-    if show_plot:
-        plt.show()
-    if save_figure:
-        fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
-    fig.set_tight_layout(True)
-    plt.close()
+# def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
+#                               xlabel=None, ylabel=None,
+#                               filename_plot='plot_annual_curve.png',
+#                               save_figure=True):
+#     """
+#     Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
+#     time series.
+#     """
+# #    for i in range(len(wind_feedin)):
+#     # Sort feedin
+#     feedin_sorted = np.sort(np.array(wind_feedin))
+#     # Plot
+#     fig = plt.figure()
+#     plt.plot(feedin_sorted)
+#     plt.xlabel(xlabel)
+#     plt.ylabel(ylabel)
+#     plt.title(legend_label)
+#     plt.ylim(ymax=0.1)
+#     plt.xlim(xmax=2500)
+#     if show_plot:
+#         plt.show()
+#     if save_figure:
+#         fig.savefig(os.path.abspath(os.path.join(
+#             os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+#     fig.set_tight_layout(True)
+#     plt.close()
 
 if __name__ == "__main__":
 

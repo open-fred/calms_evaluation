@@ -5,8 +5,8 @@ plt.style.use('ggplot')
 from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
-                         plot_histogram, plot_power_duration_curve,
-                         create_calms_dict, calms_frequency, filter_peaks)
+                         plot_histogram, create_calms_dict, calms_frequency,
+						 filter_peaks)
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
@@ -117,12 +117,12 @@ coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
                  filename_plot='Average_wind_speed_{0}'.format(year),
                  save_figure=True)
 
-# ---------------------------- Jahresdauerlinie ----------------------------- #
-# Plot of "Jahresdauerlinie"
-legend_label = 'Annual power duration curve {0}'.format(year)  # TODO: Jahresdauerlinie = Annual power duration curve??
-plot_power_duration_curve(wind_feedin[1114110], show_plot=True,
-                          legend_label=None, xlabel='Hours of the year in h',
-                          ylabel='Normalised power output',
-                          filename_plot='Power_duration_curve_' +
-                          '{0}_1114110'.format(year),
-                          save_figure=True)
+# # ---------------------------- Jahresdauerlinie ----------------------------- #
+# # Plot of "Jahresdauerlinie"
+# legend_label = 'Annual power duration curve {0}'.format(year)  # TODO: Jahresdauerlinie = Annual power duration curve??
+# plot_power_duration_curve(wind_feedin[1114110], show_plot=True,
+#                           legend_label=None, xlabel='Hours of the year in h',
+#                           ylabel='Normalised power output',
+#                           filename_plot='Power_duration_curve_' +
+#                           '{0}_1114110'.format(year),
+#                           save_figure=True)
