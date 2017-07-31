@@ -6,7 +6,7 @@ from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, plot_power_duration_curve,
-                         create_calm_dict, calms_frequency, filter_peaks)
+                         create_calms_dict, calms_frequency, filter_peaks)
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
@@ -60,7 +60,7 @@ print('Calculating calms...')
 for i in range(len(power_limit)):
     print('  ...with power limit: ' + str(int(power_limit[i]*100)) + '%')
     # Get all calms
-    calms_dict = create_calm_dict(power_limit[i], wind_feedin)
+    calms_dict = create_calms_dict(power_limit[i], wind_feedin)
     # Get all calms with filtered peaks
     calms_dict_filtered = filter_peaks(calms_dict, power_limit[i])
     print('Making plots...')

@@ -64,7 +64,7 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def create_calm_dict(power_limit, wind_feedin):
+def create_calms_dict(power_limit, wind_feedin):
     """
     Creates a Dictonary containing entries for all locations with the wind
     feedin time series (column 'feedin_wind_pp') and information about calms
