@@ -200,12 +200,11 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, normed=False, range=(calms_sorted.min(),
-                                                calms_sorted.max()))
+    plt.hist(calms_sorted, bins=np.arange(0, 1200, 50), normed=False)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.ylim(ymax=400)
-    plt.xlim(xmax=1200)
+    plt.xticks(np.linspace(0, 1200, 13, endpoint=True))
+    # plt.ylim(ymax=400) TODO: set ylim for comparison to hightest level
     plt.title(legend_label)
     if show_plot:
         plt.show()
