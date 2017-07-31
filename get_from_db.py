@@ -207,6 +207,7 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
             os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+    plt.close()
     return
 
 
