@@ -64,7 +64,7 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def create_calm_dict(power_limit, wind_feedin):
+def create_calms_dict(power_limit, wind_feedin):
     """
     Creates a Dictonary containing DataFrames for all locations (keys: gid of
     locations) with the wind feedin time series (column 'feedin_wind_pp') and
@@ -99,16 +99,17 @@ def calculate_calms(calms_dict):
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
+        df = calms_dict[key]
         # Find calm periods
-        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Write the calm lengths into array of dictionary calm_lengths
         calm_lengths[key] = np.array([len(calm_arrays[i])
                                      for i in range(len(calm_arrays))])
         # Find the longest and shortest calm from all periods
-        maximum = max(calm_lengths[key])
+        maximum = len(max(calm_arrays, key=len))
         calms_max[key] = maximum
-        minimum = min(calm_lengths[key])
+        minimum = len(min(calm_arrays, key=len))
         calms_min[key] = minimum
     # Create DataFrame
     calms_max = pd.DataFrame(data=calms_max, index=['results']).transpose()
@@ -127,6 +128,37 @@ def calms_frequency(calm_lengths, min_length):
                                       calm_lengths[key]).size
     calms_freq = pd.DataFrame(data=calms_freq, index=['results']).transpose()
     return calms_freq
+
+
+def filter_peaks(calms_dict, power_limit):
+    """
+    Filteres the peaks from the calms using a running average.
+    """
+    for key in calms_dict:
+        # Find calm periods
+        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
+        # Filter out peaks
+        df = calms_dict[key]
+        feedin_arr = np.array(df['feedin_wind_pp'])
+        calm_arr = np.array(df['calm'])
+        i = 0
+        while i <= (len(calm_arrays) - 1):
+            j = i + 1
+            if j > (len(calm_arrays) - 1):
+                break
+            while (sum(feedin_arr[calm_arrays[i][0]:calm_arrays[j][-1] + 1]) /
+                   len(feedin_arr[calm_arrays[i][0]:calm_arrays[j][-1] + 1])
+                   < power_limit):
+                j = j + 1
+                if j > (len(calm_arrays) - 1):
+                    break
+            calm_arr[calm_arrays[i][0]:calm_arrays[j-1][-1] + 1] = feedin_arr[
+                calm_arrays[i][0]:calm_arrays[j-1][-1] + 1]
+            i = j
+        df['calm'] = calm_arr
+        calms_dict[key] = df
+    return calms_dict
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
@@ -186,6 +218,7 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
             os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+    plt.close()
     return
 
 
