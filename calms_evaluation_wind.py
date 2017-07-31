@@ -58,6 +58,7 @@ wind_feedin = get_data(power_plant=E126, multi_weather=multi_weather,
 # Calculate calms
 print('Calculating calms...')
 for i in range(len(power_limit)):
+    print('  ...with power limit: ' + str(int(power_limit[i]*100)) + '%')
     # Get all calms
     calms_dict = create_calm_dict(power_limit[i], wind_feedin)
     # Get all calms with filtered peaks
