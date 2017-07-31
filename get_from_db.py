@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
 import os
+import copy
 
 
 def fetch_geometries(conn, **kwargs):
@@ -105,11 +106,11 @@ def calculate_calms(calms_dict):
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Write the calm lengths into array of dictionary calm_lengths
         calm_lengths[key] = np.array([len(calm_arrays[i])
-                                     for i in range(len(calm_arrays))])
+                                      for i in range(len(calm_arrays))])
         # Find the longest and shortest calm from all periods
-        maximum = len(max(calm_arrays, key=len))
+        maximum = max(calm_lengths[key])
         calms_max[key] = maximum
-        minimum = len(min(calm_arrays, key=len))
+        minimum = min(calm_lengths[key])
         calms_min[key] = minimum
     # Create DataFrame
     calms_max = pd.DataFrame(data=calms_max, index=['results']).transpose()
@@ -134,12 +135,13 @@ def filter_peaks(calms_dict, power_limit):
     """
     Filteres the peaks from the calms using a running average.
     """
-    for key in calms_dict:
+    calms_dict_filtered = copy.deepcopy(calms_dict)
+    for key in calms_dict_filtered:
+        df = calms_dict_filtered[key]
         # Find calm periods
-        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Filter out peaks
-        df = calms_dict[key]
         feedin_arr = np.array(df['feedin_wind_pp'])
         calm_arr = np.array(df['calm'])
         i = 0
@@ -157,8 +159,8 @@ def filter_peaks(calms_dict, power_limit):
                 calm_arrays[i][0]:calm_arrays[j-1][-1] + 1]
             i = j
         df['calm'] = calm_arr
-        calms_dict[key] = df
-    return calms_dict
+        calms_dict_filtered[key] = df
+    return calms_dict_filtered
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
