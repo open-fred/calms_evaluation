@@ -121,7 +121,7 @@ def calms_frequency(calm_lengths, min_length):
 
 def filter_peaks(calms_dict, power_limit):
     """
-    Find calms while peaks are filtered out using a running average.
+    Filteres the peaks from the calms using a running average.
     """
     calms_dict_filtered = calms_dict
     for key in calms_dict:
