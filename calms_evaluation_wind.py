@@ -74,12 +74,12 @@ for i in range(len(power_limit)):
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
         legend_label = ('Longest calms Germany {0} power limit < {1}%'.format(
             year, int(power_limit[i]*100)) + string)
-        coastdat_geoplot(calms_max, conn, show_plot=True,
+        coastdat_geoplot(calms_max, conn, show_plot=False,
                          legend_label=legend_label,
                          filename_plot='Longest_calms_{0}_{1}'.format(
                              year, power_limit[i]) + '_std_2011' + string + '.png',
                          save_figure=True, scale_parameter=scale_parameter)
-        coastdat_geoplot(calms_max, conn, show_plot=True,
+        coastdat_geoplot(calms_max, conn, show_plot=False,
                          legend_label=legend_label,
                          filename_plot='Longest_calms_{0}_{1}'.format(
                              year, power_limit[i]) + string + '.png',
@@ -92,7 +92,7 @@ for i in range(len(power_limit)):
                             '{0} h in {1} power limit < {2}%'.format(
                                 int(min_lengths[j]), year,
                                 int(power_limit[i] * 100)) + string)
-            coastdat_geoplot(frequencies, conn, show_plot=True,
+            coastdat_geoplot(frequencies, conn, show_plot=False,
                              legend_label=legend_label,
                              filename_plot='Frequency_{0}h_{1}_{2}'.format(
                                  int(min_lengths[j]), year, power_limit[i]) + string + '.png',
