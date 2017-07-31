@@ -77,7 +77,8 @@ for i in range(len(power_limit)):
         coastdat_geoplot(calms_max, conn, show_plot=False,
                          legend_label=legend_label,
                          filename_plot='Longest_calms_{0}_{1}'.format(
-                             year, power_limit[i]) + '_std_2011' + string + '.png',
+                             year, power_limit[i]) + '_std_2011' + string +
+                                                     '.png',
                          save_figure=True, scale_parameter=scale_parameter)
         coastdat_geoplot(calms_max, conn, show_plot=False,
                          legend_label=legend_label,
@@ -95,12 +96,13 @@ for i in range(len(power_limit)):
             coastdat_geoplot(frequencies, conn, show_plot=False,
                              legend_label=legend_label,
                              filename_plot='Frequency_{0}h_{1}_{2}'.format(
-                                 int(min_lengths[j]), year, power_limit[i]) + string + '.png',
+                                 int(min_lengths[j]), year, power_limit[i]) +
+                             string + '.png',
                              save_figure=True)
         # Histogram containing longest calms of each location
         legend_label = 'Calm histogram Germany{0} power limit < {1}%'.format(
-            year, int(power_limit[i]*100) + string)
-        plot_histogram(calms_max, show_plot=True, legend_label=legend_label,
+            year, int(power_limit[i]*100)) + string
+        plot_histogram(calms_max, show_plot=False, legend_label=legend_label,
                        xlabel='Length of calms in h', ylabel='Number of calms',
                        filename_plot='Calm_histogram_{0}_{1}'.format(
                            year, power_limit[i]) + string + '.png',
