@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
 import os
+import copy
 
 
 def fetch_geometries(conn, **kwargs):
@@ -133,7 +134,7 @@ def filter_peaks(calms_dict, power_limit):
     """
     Filteres the peaks from the calms using a running average.
     """
-    calms_dict_filtered = calms_dict.copy()
+    calms_dict_filtered = copy.deepcopy(calms_dict)
     for key in calms_dict_filtered:
         # Find calm periods
         calms, = np.where(calms_dict_filtered[key]['calm'] != 'no_calm')
