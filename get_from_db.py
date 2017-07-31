@@ -137,11 +137,11 @@ def filter_peaks(calms_dict, power_limit):
     """
     calms_dict_filtered = copy.deepcopy(calms_dict)
     for key in calms_dict_filtered:
+        df = calms_dict_filtered[key]
         # Find calm periods
-        calms, = np.where(calms_dict_filtered[key]['calm'] != 'no_calm')
+        calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Filter out peaks
-        df = calms_dict_filtered[key]
         feedin_arr = np.array(df['feedin_wind_pp'])
         calm_arr = np.array(df['calm'])
         i = 0
