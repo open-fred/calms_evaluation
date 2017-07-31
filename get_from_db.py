@@ -100,8 +100,9 @@ def calculate_calms(calms_dict):
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
+        df = calms_dict[key]
         # Find calm periods
-        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Write the calm lengths into array of dictionary calm_lengths
         calm_lengths[key] = np.array([len(calm_arrays[i])
