@@ -235,7 +235,7 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
 
 def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                    ylabel=None, filename_plot='plot_histogram.png',
-                   save_folder='Plots', save_figure=True):
+                   save_folder='Plots', save_figure=True, maximum_bin=1200):
     """ calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
     Histogram contains longest calms of each location.
@@ -244,11 +244,11 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, bins=np.arange(0, 1200, 50), normed=False)
+    plt.hist(calms_sorted, bins=np.arange(0, maximum_bin, 50), normed=False)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.xticks(np.linspace(0, 1200, 13, endpoint=True))
-    # plt.ylim(ymax=400) TODO: set ylim for comparison to hightest level
+    plt.xticks(np.linspace(0, maximum_bin, 13,
+                           endpoint=True))
     plt.title(legend_label)
     if show_plot:
         plt.show()

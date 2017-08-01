@@ -111,7 +111,7 @@ for i in range(len(power_limit)):
                        xlabel='Length of calms in h', ylabel='Number of calms',
                        filename_plot='Calm_histogram_{0}_{1}'.format(
                            year, power_limit[i]) + string + '.png',
-                       save_figure=True, save_folder='Plots')
+                       save_figure=True, save_folder='Plots', maximum_bin=2000)
         # print(str(time.clock() - t0) + ' seconds since t0')
 
 # --------------------------- Average wind speed ---------------------------- #
