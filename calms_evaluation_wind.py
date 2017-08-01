@@ -7,7 +7,7 @@ from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, create_calms_dict, calms_frequency,
-						 filter_peaks)
+                         filter_peaks)
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
