@@ -173,7 +173,7 @@ def filter_peaks(calms_dict, power_limit):
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
-                     save_folder='Plots', cmapname='inferno',
+                     save_folder='Plots', cmapname='inferno_r',
                      scale_parameter=None):
     """
     results_df should have the coastdat region gid as index and the values
