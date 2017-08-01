@@ -49,6 +49,11 @@ def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
             for i in range(len(multi_weather)):
                 data[multi_weather[i].name] = power_plant.feedin(
                     weather=multi_weather[i], installed_capacity=1)
+        if data_type == 'pv_feedin':
+            data = {}
+            for i in range(len(multi_weather)):
+                data[multi_weather[i].name] = power_plant.feedin(
+                    weather=multi_weather[i], peak_power=1)
         pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
         data = pickle.load(open(filename, 'rb'))
