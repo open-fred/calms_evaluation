@@ -249,6 +249,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     plt.ylabel(ylabel)
     plt.xticks(np.linspace(0, maximum_bin, 13,
                            endpoint=True))
+    plt.ylim(ymax=250)  #TODO: set ylim for comparison to hightest level
     plt.title(legend_label)
     if show_plot:
         plt.show()
