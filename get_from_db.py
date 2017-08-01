@@ -168,7 +168,8 @@ def filter_peaks(calms_dict, power_limit):
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
-                     cmapname='inferno', scale_parameter=None):
+                     save_folder='Plots', cmapname='inferno',
+                     scale_parameter=None):
     """
     results_df should have the coastdat region gid as index and the values
     that are plotted (average wind speed, calm length, etc.) in the column
@@ -222,14 +223,14 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+            os.path.dirname(__file__), '..', save_folder, filename_plot)))
     plt.close()
     return
 
 
 def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                    ylabel=None, filename_plot='plot_histogram.png',
-                   save_figure=True):
+                   save_folder='Plots', save_figure=True):
     """ calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
     Histogram contains longest calms of each location.
@@ -248,7 +249,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+            os.path.dirname(__file__), '..', save_folder, filename_plot)))
     fig.set_tight_layout(True)
     plt.close()
 
@@ -256,6 +257,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
 # def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
 #                               xlabel=None, ylabel=None,
 #                               filename_plot='plot_annual_curve.png',
+#     save_folder = 'Plots',
 #                               save_figure=True):
 #     """
 #     Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
@@ -276,7 +278,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
 #         plt.show()
 #     if save_figure:
 #         fig.savefig(os.path.abspath(os.path.join(
-#             os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+#             os.path.dirname(__file__), '..', save_folder, filename_plot)))
 #     fig.set_tight_layout(True)
 #     plt.close()
 
