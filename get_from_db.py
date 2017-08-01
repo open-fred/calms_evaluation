@@ -49,6 +49,11 @@ def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
             for i in range(len(multi_weather)):
                 data[multi_weather[i].name] = power_plant.feedin(
                     weather=multi_weather[i], installed_capacity=1)
+        if data_type == 'pv_feedin':
+            data = {}
+            for i in range(len(multi_weather)):
+                data[multi_weather[i].name] = power_plant.feedin(
+                    weather=multi_weather[i], peak_power=1)
         pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
         data = pickle.load(open(filename, 'rb'))
@@ -158,14 +163,18 @@ def filter_peaks(calms_dict, power_limit):
             calm_arr[calm_arrays[i][0]:calm_arrays[j-1][-1] + 1] = feedin_arr[
                 calm_arrays[i][0]:calm_arrays[j-1][-1] + 1]
             i = j
-        df['calm'] = calm_arr
-        calms_dict_filtered[key] = df
+        df2 = pd.DataFrame(data=calm_arr, columns=['calm2'], index=df.index)
+        df_final = pd.concat([df, df2], axis=1)
+        df_final = df_final.drop('calm', axis=1)
+        df_final.columns = ['feedin_wind_pp', 'calm']
+        calms_dict_filtered[key] = df_final
     return calms_dict_filtered
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
-                     cmapname='inferno', scale_parameter=None):
+                     save_folder='Plots', cmapname='inferno',
+                     scale_parameter=None):
     """
     results_df should have the coastdat region gid as index and the values
     that are plotted (average wind speed, calm length, etc.) in the column
@@ -219,14 +228,14 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+            os.path.dirname(__file__), '..', save_folder, filename_plot)))
     plt.close()
     return
 
 
 def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                    ylabel=None, filename_plot='plot_histogram.png',
-                   save_figure=True):
+                   save_folder='Plots', save_figure=True):
     """ calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
     Histogram contains longest calms of each location.
@@ -245,7 +254,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+            os.path.dirname(__file__), '..', save_folder, filename_plot)))
     fig.set_tight_layout(True)
     plt.close()
 
@@ -253,6 +262,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
 # def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
 #                               xlabel=None, ylabel=None,
 #                               filename_plot='plot_annual_curve.png',
+#     save_folder = 'Plots',
 #                               save_figure=True):
 #     """
 #     Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
@@ -273,7 +283,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
 #         plt.show()
 #     if save_figure:
 #         fig.savefig(os.path.abspath(os.path.join(
-#             os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+#             os.path.dirname(__file__), '..', save_folder, filename_plot)))
 #     fig.set_tight_layout(True)
 #     plt.close()
 
