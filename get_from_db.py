@@ -158,8 +158,11 @@ def filter_peaks(calms_dict, power_limit):
             calm_arr[calm_arrays[i][0]:calm_arrays[j-1][-1] + 1] = feedin_arr[
                 calm_arrays[i][0]:calm_arrays[j-1][-1] + 1]
             i = j
-        df['calm'] = calm_arr
-        calms_dict_filtered[key] = df
+        df2 = pd.DataFrame(data=calm_arr, columns=['calm2'], index=df.index)
+        df_final = pd.concat([df, df2], axis=1)
+        df_final = df_final.drop('calm', axis=1)
+        df_final.columns = ['feedin_wind_pp', 'calm']
+        calms_dict_filtered[key] = df_final
     return calms_dict_filtered
 
 
