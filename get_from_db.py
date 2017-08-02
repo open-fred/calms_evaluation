@@ -140,6 +140,7 @@ def filter_peaks(calms_dict, power_limit):
     """
     Filteres the peaks from the calms using a running average.
     """
+    # TODO: Could be run a second time with the camls_dict_filtered to filter possilble peaks again
     calms_dict_filtered = copy.deepcopy(calms_dict)
     for key in calms_dict_filtered:
         df = calms_dict_filtered[key]
