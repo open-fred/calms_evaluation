@@ -236,7 +236,7 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
 def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                    ylabel=None, filename_plot='plot_histogram.png',
                    save_folder='Plots', save_figure=True, maximum_bin=1200,
-                   ylim=None):
+                   ylimit=None):
     """
     calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
@@ -251,7 +251,8 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     plt.ylabel(ylabel)
     plt.xticks(np.linspace(0, maximum_bin, 13,
                            endpoint=True))
-    plt.ylim(ymax=250)  #TODO: set ylim for comparison to hightest level
+    if ylimit:
+        plt.ylim(ymax=ylimit)
     plt.title(legend_label)
     if show_plot:
         plt.show()
