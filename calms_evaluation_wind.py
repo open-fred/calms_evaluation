@@ -23,7 +23,10 @@ conn = db.connection(section='reiner')
 show_plot = False
 save_figure = True
 energy_source = 'Wind'  # 'Wind', 'PV' or 'Wind_PV'
-filter = ['unfiltered', 'filtered']  # Filter or don't filter peaks (or both)
+filter = [
+    'unfiltered',
+    'filtered'
+]  # Filter or don't filter peaks (or both)
 calms_filtered_load = True  # False is you haven't dumped the dictionary yet
 
 # ----------------------- Plots and their parameters ------------------------ #
