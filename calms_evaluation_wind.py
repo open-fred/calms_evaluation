@@ -90,45 +90,57 @@ for i in range(len(power_limit)):
         if k == 0:
             string = ''
         if k == 1:
-            string = '_filtered'
+            string = 'filtered'
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
         # Geoplot of longest calms of each location
-        legend_label = ('Longest calms Germany {0} power limit < {1}%'.format(
-            year, int(power_limit[i]*100)) + string)
+        legend_label = ('Longest calms Germany ' +
+                        '{0} power limit < {1}% {2} {3}'.format(
+                            year, int(power_limit[i]*100), energy_source,
+                            string))
         coastdat_geoplot(calms_max, conn, show_plot=False,
                          legend_label=legend_label,
-                         filename_plot='Longest_calms_{0}_{1}'.format(
-                             year, power_limit[i]) + '_std_2011' + string +
-                                                     '.png',
+                         filename_plot='Longest_calms_' +
+                                       '{0}_{1}_{2}_std_2011_{3}.png'.format(
+                                           energy_source, year, power_limit[i],
+                                           string),
                          save_figure=True, save_folder='Plots',
                          scale_parameter=scale_parameter)
         # scaled to maximum of calms
         coastdat_geoplot(calms_max, conn, show_plot=False,
                          legend_label=legend_label,
-                         filename_plot='Longest_calms_{0}_{1}'.format(
-                             year, power_limit[i]) + string + '.png',
+                         filename_plot='Longest_calms_' +
+                                       '{0}_{1}_{2}_{3}.png'.format(
+                                           energy_source, year, power_limit[i],
+                                           string),
                          save_figure=True, save_folder='Plots')
         if k == 0:
             # Geoplot of calm lengths > certain calm length (min_lengths)
             for j in range(len(min_lengths)):
                 frequencies = calms_frequency(calm_lengths, min_lengths[j])
                 legend_label = ('Frequency of calms >= ' +
-                                '{0} h in {1} power limit < {2}%'.format(
+                                '{0} h in {1} power limit < {2}% {3}'.format(
                                     int(min_lengths[j]), year,
-                                    int(power_limit[i] * 100)) + string)
+                                    int(power_limit[i] * 100), energy_source))
                 coastdat_geoplot(frequencies, conn, show_plot=False,
                                  legend_label=legend_label,
-                                 filename_plot='Frequency_{0}h_{1}_{2}'.format(
-                                     int(min_lengths[j]), year,
-                                     power_limit[i]) + '.png',
+                                 filename_plot='Frequency_' +
+                                               '{0}_{1}h_{2}_{3}.png'.format(
+                                                   energy_source,
+                                                   int(min_lengths[j]), year,
+                                                   power_limit[i]),
                                  save_figure=True, save_folder='Plots')
         # Histogram containing longest calms of each location
-        legend_label = 'Maximum calms Germany {0} power limit < {1}%'.format(
-            year, int(power_limit[i]*100)) + string
+        legend_label = ('Maximum calms Germany' +
+                        '{0} power limit < {1}% {2} {3}'.format(
+                            year, int(power_limit[i]*100), energy_source,
+                            string))
         plot_histogram(calms_max, show_plot=False, legend_label=legend_label,
-                       x_label='Length of calms in h', y_label='Number of calms',
-                       filename_plot='Histogram_maximum_calms_{0}_{1}'.format(
-                           year, power_limit[i]) + string + '.png',
+                       x_label='Length of calms in h',
+                       y_label='Number of calms',
+                       filename_plot='Histogram_maximum_calms_' +
+                                     '_{0}_{1}_{2}_{3}.png'.format(
+                                         energy_source, year, power_limit[i],
+                                         string),
                        save_figure=True, save_folder='Plots', y_limit=None,
                        x_limit=2000, bin_width=50, tick_width=200)
         # Histogram containing all calms of all location
@@ -136,12 +148,15 @@ for i in range(len(power_limit)):
         for key in calm_lengths:
             calm_arr = np.append(calm_arr, calm_lengths[key])
         calm_df = pd.DataFrame(data=calm_arr, columns=['results'])
-        legend_label = 'Calms Germany {0} power limit < {1}%'.format(
-            year, int(power_limit[i] * 100)) + string
+        legend_label = 'Calms Germany {0} power limit < {1}% {2} {3}'.format(
+            year, int(power_limit[i] * 100), energy_source, string)
         plot_histogram(calm_df, show_plot=False, legend_label=legend_label,
-                       x_label='Length of calms in h', y_label='Number of calms',
-                       filename_plot='Histogram_calms_{0}_{1}'.format(
-                           year, power_limit[i]) + string + '.png',
+                       x_label='Length of calms in h',
+                       y_label='Number of calms',
+                       filename_plot='Histogram_calms_' +
+                                     '_{0}_{1}_{2}_{3}.png'.format(
+                                         energy_source, year, power_limit[i],
+                                         string),
                        save_figure=True, save_folder='Plots', y_limit=500,
                        x_limit=2000, bin_width=50, tick_width=200)
         # print(str(time.clock() - t0) + ' seconds since t0')
