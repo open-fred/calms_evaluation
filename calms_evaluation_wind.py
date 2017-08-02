@@ -35,6 +35,8 @@ geoplots = [
 ]
 scale_parameter = None  # If None: standardization with maximum calm length
 save_folder1 = 'Plots'
+cmapname = 'inferno_r'
+
 # Histograms (and parameters)
 histograms = [
     'longest_calms',
@@ -136,7 +138,8 @@ for i in range(len(power_limit)):
                                 year, int(power_limit[i]*100), energy_source,
                                 string))
             coastdat_geoplot(calms_max, conn, show_plot, legend_label,
-                             save_figure, save_folder1, scale_parameter,
+                             save_figure, save_folder1, cmapname,
+                             scale_parameter,
                              filename_plot='Longest_calms_' +
                                            '{0}_{1}_{2}_{3}.png'.format(
                                                energy_source, year,
@@ -150,7 +153,8 @@ for i in range(len(power_limit)):
                                     int(min_lengths[j]), year,
                                     int(power_limit[i] * 100), energy_source))
                 coastdat_geoplot(frequencies, conn, show_plot, legend_label,
-                             save_figure, save_folder1, scale_parameter,
+                                 save_figure, save_folder1, cmapname,
+                                 scale_parameter,
                                  filename_plot='Frequency_' +
                                                '{0}_{1}h_{2}_{3}.png'.format(
                                                    energy_source,
