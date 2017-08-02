@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pickle
 import os
+import copy
 
 
 def fetch_geometries(conn, **kwargs):
@@ -48,6 +49,11 @@ def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
             for i in range(len(multi_weather)):
                 data[multi_weather[i].name] = power_plant.feedin(
                     weather=multi_weather[i], installed_capacity=1)
+        if data_type == 'pv_feedin':
+            data = {}
+            for i in range(len(multi_weather)):
+                data[multi_weather[i].name] = power_plant.feedin(
+                    weather=multi_weather[i], peak_power=1)
         pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
         data = pickle.load(open(filename, 'rb'))
@@ -64,9 +70,9 @@ def calculate_avg_wind_speed(multi_weather):
     return avg_wind_speed
 
 
-def create_calm_dict(power_limit, wind_feedin):
+def create_calms_dict(power_limit, wind_feedin):
     """
-    Creates a Dictonary containing DataFrames for all locations (keys: gid of
+    Creates a Dictonary containing DataFrames for all locations (keys: gids of
     locations) with the wind feedin time series (column 'feedin_wind_pp') and
     information about calms (column 'calm' - calm: value of wind feedin,
     no calm: 'no_calm').
@@ -90,21 +96,22 @@ def calculate_calms(calms_dict):
     Returns
     -------
     calms_max : DataFrame
-        index: gid of location, data: longest calm of location
+        indices: gids of location, data: longest calm of location.
     calms_min : DataFrame
-        index: gid of location, data: shortest calm of location
+        indices: gids of location, data: shortest calm of location.
     calm_lengths : Dictionary
-        keys: gid of weather location, data: array
-        Length of the single calms for each location
+        keys: gids of weather location, data: array
+        Length of the single calms for each location.
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
+        df = calms_dict[key]
         # Find calm periods
-        calms, = np.where(calms_dict[key]['calm'] != 'no_calm')
+        calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Write the calm lengths into array of dictionary calm_lengths
         calm_lengths[key] = np.array([len(calm_arrays[i])
-                                     for i in range(len(calm_arrays))])
+                                      for i in range(len(calm_arrays))])
         # Find the longest and shortest calm from all periods
         maximum = max(calm_lengths[key])
         calms_max[key] = maximum
@@ -118,7 +125,7 @@ def calculate_calms(calms_dict):
 
 def calms_frequency(calm_lengths, min_length):
     """
-    Write frequency of calms with length >= min_length into arrays for each
+    Finds the frequency of calms with length >= min_length for each
     location.
     """
     calms_freq = {}
@@ -129,9 +136,45 @@ def calms_frequency(calm_lengths, min_length):
     return calms_freq
 
 
+def filter_peaks(calms_dict, power_limit):
+    """
+    Filteres the peaks from the calms using a running average.
+    """
+    calms_dict_filtered = copy.deepcopy(calms_dict)
+    for key in calms_dict_filtered:
+        df = calms_dict_filtered[key]
+        # Find calm periods
+        calms, = np.where(df['calm'] != 'no_calm')
+        calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
+        # Filter out peaks
+        feedin_arr = np.array(df['feedin_wind_pp'])
+        calm_arr = np.array(df['calm'])
+        i = 0
+        while i <= (len(calm_arrays) - 1):
+            j = i + 1
+            if j > (len(calm_arrays) - 1):
+                break
+            while (sum(feedin_arr[calm_arrays[i][0]:calm_arrays[j][-1] + 1]) /
+                   len(feedin_arr[calm_arrays[i][0]:calm_arrays[j][-1] + 1])
+                   < power_limit):
+                j = j + 1
+                if j > (len(calm_arrays) - 1):
+                    break
+            calm_arr[calm_arrays[i][0]:calm_arrays[j-1][-1] + 1] = feedin_arr[
+                calm_arrays[i][0]:calm_arrays[j-1][-1] + 1]
+            i = j
+        df2 = pd.DataFrame(data=calm_arr, columns=['calm2'], index=df.index)
+        df_final = pd.concat([df, df2], axis=1)
+        df_final = df_final.drop('calm', axis=1)
+        df_final.columns = ['feedin_wind_pp', 'calm']
+        calms_dict_filtered[key] = df_final
+    return calms_dict_filtered
+
+
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
                      filename_plot='plot.png', save_figure=True,
-                     cmapname='inferno', scale_parameter=None):
+                     save_folder='Plots', cmapname='inferno_r',
+                     scale_parameter=None):
     """
     results_df should have the coastdat region gid as index and the values
     that are plotted (average wind speed, calm length, etc.) in the column
@@ -185,14 +228,17 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+            os.path.dirname(__file__), '..', save_folder, filename_plot)))
+    plt.close()
     return
 
 
 def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                    ylabel=None, filename_plot='plot_histogram.png',
-                   save_figure=True):
-    """ calms should have the coastdat region gid as index and the values
+                   save_folder='Plots', save_figure=True, maximum_bin=1200,
+                   ylimit=None):
+    """
+    calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
     Histogram contains longest calms of each location.
     """
@@ -200,17 +246,19 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, bins=np.arange(0, 1200, 50), normed=False)
+    plt.hist(calms_sorted, bins=np.arange(0, maximum_bin, 50), normed=False)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.xticks(np.linspace(0, 1200, 13, endpoint=True))
-    # plt.ylim(ymax=400) TODO: set ylim for comparison to hightest level
+    plt.xticks(np.linspace(0, maximum_bin, 13,
+                           endpoint=True))
+    if ylimit:
+        plt.ylim(ymax=ylimit)
     plt.title(legend_label)
     if show_plot:
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+            os.path.dirname(__file__), '..', save_folder, filename_plot)))
     fig.set_tight_layout(True)
     plt.close()
 
@@ -218,6 +266,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
 # def plot_power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
 #                               xlabel=None, ylabel=None,
 #                               filename_plot='plot_annual_curve.png',
+#     save_folder = 'Plots',
 #                               save_figure=True):
 #     """
 #     Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
@@ -238,7 +287,7 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
 #         plt.show()
 #     if save_figure:
 #         fig.savefig(os.path.abspath(os.path.join(
-#             os.path.dirname(__file__), '..', 'Plots', filename_plot)))
+#             os.path.dirname(__file__), '..', save_folder, filename_plot)))
 #     fig.set_tight_layout(True)
 #     plt.close()
 
