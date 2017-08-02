@@ -105,7 +105,7 @@ for i in range(len(power_limit)):
                                      power_limit[i]) + '.png',
                                  save_figure=True, save_folder='Plots')
         # Histogram containing longest calms of each location
-        legend_label = 'Calm histogram Germany{0} power limit < {1}%'.format(
+        legend_label = 'Maximum calms Germany {0} power limit < {1}%'.format(
             year, int(power_limit[i]*100)) + string
         plot_histogram(calms_max, show_plot=False, legend_label=legend_label,
                        x_label='Length of calms in h', y_label='Number of calms',
