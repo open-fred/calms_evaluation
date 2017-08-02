@@ -23,10 +23,11 @@ conn = db.connection(section='reiner')
 show_plot = False
 save_figure = True
 energy_source = 'Wind'  # 'Wind', 'PV' or 'Wind_PV'
+# Filter or don't filter peaks (or both)
 filter = [
-    'unfiltered',
-    'filtered'
-]  # Filter or don't filter peaks (or both)
+    'unfiltered',  # always calculated, but only plotted if not uncommented
+    'filtered'  # only calculated and plottet if not uncommented
+]
 
 # ----------------------- Plots and their parameters ------------------------ #
 # The following plots are created:
