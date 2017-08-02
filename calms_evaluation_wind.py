@@ -5,6 +5,7 @@ plt.style.use('ggplot')
 import numpy as np
 import pandas as pd
 # import time
+import pickle
 from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
@@ -23,6 +24,7 @@ scale_parameter = 1020.0  # If None: standardization with maximum calm lenght
 
 # ---------------------- Chose energy source and plots ---------------------- #
 energy_source = 'Wind'  # 'Wind', 'PV' or 'Wind_PV'
+calms_filtered_load = False  # False is you haven't dumped the dictionary yet
 # Specification of the weather data set CoastDat2
 coastDat2 = {
     'dhi': 0,
@@ -81,11 +83,21 @@ for i in range(len(power_limit)):
     # t0 = time.clock()
     print('  ...with power limit: ' + str(int(power_limit[i]*100)) + '%')
     # Get all calms
-    calms_dict = create_calms_dict(power_limit[i], wind_feedin)
-    # Get all calms with filtered peaks
-    calms_dict_filtered = filter_peaks(calms_dict, power_limit[i])
+    calms_dict = create_calms_dict(power_limit[i], feedin)
+    dict_list = []
+    if 'unfiltered' in filter:
+        dict_list.append(calms_dict)
+    if 'filtered' in filter:
+        # Get all calms with filtered peaks
+        filename = 'calms_dict_filtered_pickle_{0}_{1}_{2}.p'.format(
+            year, energy_source, power_limit[i])
+        if calms_filtered_load:
+            calms_dict_filtered = pickle.load(open(filename, 'rb'))
+        else:
+            calms_dict_filtered = filter_peaks(calms_dict, power_limit[i])
+            pickle.dump(calms_dict_filtered, open(filename, 'wb'))
+        dict_list.append(calms_dict_filtered)
     # Plots
-    dict_list = [calms_dict, calms_dict_filtered]
     for k in range(len(dict_list)):
         if k == 0:
             string = ''
