@@ -50,6 +50,13 @@ x_limit = 2000
 bin_width = 50
 tick_freq = 200  # Frequency of x-ticks
 
+# Others
+others = [
+    'average_wind_speed',
+    # 'average_irradiance'  # not implemented yet
+]
+save_folder3 = save_folder1
+
 # ---------------------- Weather and power plant data ----------------------- #
 # Specification of the weather data set CoastDat2
 coastDat2 = {
@@ -192,14 +199,15 @@ for i in range(len(power_limit)):
                                              power_limit[i], string))
 # print(str(time.clock() - t0) + ' seconds since t0')
 
-# # --------------------------- Average wind speed ---------------------------- #
-# print('Calculating average wind speed...')
-# wind_speed = calculate_avg_wind_speed(multi_weather)
-# # Geoplot of average wind speed of each location
-# legend_label = 'Average wind speed_{0}'.format(year)
-# coastdat_geoplot(wind_speed, conn, show_plot=True, legend_label=legend_label,
-#                  filename_plot='Average_wind_speed_{0}'.format(year),
-#                  save_figure=True, save_folder='Plots')
+# --------------------------- Average wind speed ---------------------------- #
+if 'average_wind_speed' in others:
+    print('Calculating average wind speed...')
+    wind_speed = calculate_avg_wind_speed(multi_weather)
+    # Geoplot of average wind speed of each location
+    legend_label = 'Average wind speed_{0}'.format(year)
+    coastdat_geoplot(wind_speed, conn, show_plot, legend_label, save_figure,
+                     save_folder3, cmapname,
+                     filename_plot='Average_wind_speed_{0}'.format(year))
 
 # # ---------------------------- Jahresdauerlinie ----------------------------- #
 # # Plot of "Jahresdauerlinie"
