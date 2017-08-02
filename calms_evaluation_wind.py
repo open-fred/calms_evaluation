@@ -2,6 +2,8 @@ import oemof.db as db
 import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
+import numpy as np
+import pandas as pd
 # import time
 from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
@@ -73,8 +75,8 @@ for i in range(len(power_limit)):
             string = ''
         if k == 1:
             string = '_filtered'
-        # Geoplot of longest calms of each location
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
+        # Geoplot of longest calms of each location
         legend_label = ('Longest calms Germany {0} power limit < {1}%'.format(
             year, int(power_limit[i]*100)) + string)
         coastdat_geoplot(calms_max, conn, show_plot=False,
@@ -112,6 +114,19 @@ for i in range(len(power_limit)):
                        filename_plot='Histogram_maximum_calms_{0}_{1}'.format(
                            year, power_limit[i]) + string + '.png',
                        save_figure=True, save_folder='Plots', y_limit=None,
+                       x_limit=2000, bin_width=50, tick_width=200)
+        # Histogram containing all calms of all location
+        calm_arr = np.array([])
+        for key in calm_lengths:
+            calm_arr = np.append(calm_arr, calm_lengths[key])
+        calm_df = pd.DataFrame(data=calm_arr, columns=['results'])
+        legend_label = 'Calms Germany {0} power limit < {1}%'.format(
+            year, int(power_limit[i] * 100)) + string
+        plot_histogram(calm_df, show_plot=False, legend_label=legend_label,
+                       x_label='Length of calms in h', y_label='Number of calms',
+                       filename_plot='Histogram_calms_{0}_{1}'.format(
+                           year, power_limit[i]) + string + '.png',
+                       save_figure=True, save_folder='Plots', y_limit=500,
                        x_limit=2000, bin_width=50, tick_width=200)
         # print(str(time.clock() - t0) + ' seconds since t0')
 
