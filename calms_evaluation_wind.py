@@ -19,8 +19,10 @@ min_lengths = [24.0, 7*24.0]  # Minimum calm lengths for frequency of calms
 load_multi_weather = True  # False if you use a year you haven't dumped yet
 load_wind_feedin = True  # False if you use a year you haven't dumped yet
 conn = db.connection(section='reiner')
-
 scale_parameter = 1020.0  # If None: standardization with maximum calm lenght
+
+# ---------------------- Chose energy source and plots ---------------------- #
+energy_source = 'Wind'  # 'Wind', 'PV' or 'Wind_PV'
 # Specification of the weather data set CoastDat2
 coastDat2 = {
     'dhi': 0,
@@ -35,8 +37,13 @@ enerconE126 = {
     'd_rotor': 127,
     'wind_conv_type': 'ENERCON E 126 7500',
     'data_height': coastDat2}
-# Initialise wind turbine
-E126 = plants.WindPowerPlant(**enerconE126)
+
+# Specification of the pv module
+advent210 = {
+    'module_name': 'Advent_Solar_Ventura_210___2008_',
+    'azimuth': 180,
+    'tilt': 60,
+    'albedo': 0.2}
 
 # Get geometry for Germany for geoplot
 geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
@@ -45,7 +52,6 @@ geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
 #geom = [geopy.Polygon(
     #[(12.2, 52.2), (12.2, 51.6), (13.2, 51.6), (13.2, 52.2)])]
 
-
 # -------------------------- Get weather objects ---------------------------- #
 print(' ')
 print('Collecting weather objects...')
@@ -53,10 +59,20 @@ multi_weather = get_data(conn=conn, year=year, geom=geom[0],
                          pickle_load=load_multi_weather,
                          filename='multiweather_pickle_{0}.p'.format(year),
                          data_type='multi_weather')
-wind_feedin = get_data(power_plant=E126, multi_weather=multi_weather,
-                       pickle_load=load_wind_feedin,
-                       filename='windfeedin_pickle_{0}.p'.format(year),
-                       data_type='wind_feedin')
+
+# ------------------------------ Feedin data -------------------------------- #
+if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
+    turbine = plants.WindPowerPlant(**enerconE126)
+    feedin = get_data(power_plant=turbine, multi_weather=multi_weather,
+                      pickle_load=load_wind_feedin,
+                      filename='windfeedin_pickle_{0}.p'.format(year),
+                      data_type='wind_feedin')
+if (energy_source == 'PV' or energy_source == 'Wind_PV'):
+    module = plants.Photovoltaic(**advent210)
+    feedin = get_data(power_plant=module, multi_weather=multi_weather,
+                      pickle_load=load_pv_feedin,
+                      filename='pv_feedin_pickle_{0}.p'.format(year),
+                      data_type='pv_feedin')
 
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
