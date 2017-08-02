@@ -140,6 +140,7 @@ def filter_peaks(calms_dict, power_limit):
     """
     Filteres the peaks from the calms using a running average.
     """
+    # TODO: Could be run a second time with the camls_dict_filtered to filter possilble peaks again
     calms_dict_filtered = copy.deepcopy(calms_dict)
     for key in calms_dict_filtered:
         df = calms_dict_filtered[key]
@@ -172,9 +173,9 @@ def filter_peaks(calms_dict, power_limit):
 
 
 def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
-                     filename_plot='plot.png', save_figure=True,
-                     save_folder='Plots', cmapname='inferno_r',
-                     scale_parameter=None):
+                     save_figure=True, save_folder='Plots',
+                     cmapname='inferno_r', scale_parameter=None,
+                     filename_plot='plot.png'):
     """
     results_df should have the coastdat region gid as index and the values
     that are plotted (average wind speed, calm length, etc.) in the column
@@ -234,9 +235,9 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
 
 
 def plot_histogram(calms, show_plot=True, legend_label=None, x_label=None,
-                   y_label=None, filename_plot='plot_histogram.png',
-                   save_folder='Plots', save_figure=True, y_limit=None,
-                   x_limit=1200, bin_width=50, tick_width=100):
+                   y_label=None, save_folder='Plots', save_figure=True,
+                   y_limit=None, x_limit=1200, bin_width=50, tick_freq=100,
+                   filename_plot='plot_histogram.png'):
     """
     calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
@@ -246,10 +247,11 @@ def plot_histogram(calms, show_plot=True, legend_label=None, x_label=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, bins=np.arange(0, x_limit + 1, bin_width), normed=False)
+    plt.hist(calms_sorted, bins=np.arange(0, x_limit + 1, bin_width),
+             normed=False)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.xticks(np.arange(0, x_limit + 1, tick_width))
+    plt.xticks(np.arange(0, x_limit + 1, tick_freq))
     if y_limit:
         plt.ylim(ymax=y_limit)
     if x_limit:
