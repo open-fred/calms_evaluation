@@ -13,6 +13,7 @@ from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
 year = 2011  # 1998 - 2014
 # define the power limit for the calms in %
 power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
+min_lengths = [24.0, 7*24.0]  # Minimum calm lengths for frequency of calms
 load_multi_weather = True  # False if you use a year you haven't dumped yet
 load_wind_feedin = True  # False if you use a year you haven't dumped yet
 conn = db.connection(section='reiner')
@@ -91,7 +92,6 @@ for i in range(len(power_limit)):
                          save_figure=True, save_folder='Plots')
         if k == 0:
             # Geoplot of calm lengths > certain calm length (min_lengths)
-            min_lengths = [24.0, 7*24.0]
             for j in range(len(min_lengths)):
                 frequencies = calms_frequency(calm_lengths, min_lengths[j])
                 legend_label = ('Frequency of calms >= ' +
