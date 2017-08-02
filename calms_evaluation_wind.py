@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import numpy as np
 import pandas as pd
-import time
+# import time
 import pickle
 from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
@@ -24,7 +24,7 @@ show_plot = False
 save_figure = True
 energy_source = 'Wind'  # 'Wind', 'PV' or 'Wind_PV'
 filter = ['unfiltered', 'filtered']  # Filter or don't filter peaks (or both)
-calms_filtered_load = False  # False is you haven't dumped the dictionary yet
+calms_filtered_load = True  # False is you haven't dumped the dictionary yet
 
 # ----------------------- Plots and their parameters ------------------------ #
 # The following plots are created:
@@ -106,7 +106,7 @@ if (energy_source == 'PV' or energy_source == 'Wind_PV'):
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
 print('Calculating calms...')
-t0 = time.clock()
+# t0 = time.clock()
 for i in range(len(power_limit)):
     print('  ...with power limit: ' + str(int(power_limit[i]*100)) + '%')
     # Get all calms
@@ -190,7 +190,7 @@ for i in range(len(power_limit)):
                                          '_{0}_{1}_{2}_{3}.png'.format(
                                              energy_source, year,
                                              power_limit[i], string))
-print(str(time.clock() - t0) + ' seconds since t0')
+# print(str(time.clock() - t0) + ' seconds since t0')
 
 # # --------------------------- Average wind speed ---------------------------- #
 # print('Calculating average wind speed...')
