@@ -72,7 +72,7 @@ def calculate_avg_wind_speed(multi_weather):
 
 def create_calms_dict(power_limit, wind_feedin):
     """
-    Creates a Dictonary containing DataFrames for all locations (keys: gid of
+    Creates a Dictonary containing DataFrames for all locations (keys: gids of
     locations) with the wind feedin time series (column 'feedin_wind_pp') and
     information about calms (column 'calm' - calm: value of wind feedin,
     no calm: 'no_calm').
@@ -96,12 +96,12 @@ def calculate_calms(calms_dict):
     Returns
     -------
     calms_max : DataFrame
-        index: gid of location, data: longest calm of location
+        indices: gids of location, data: longest calm of location.
     calms_min : DataFrame
-        index: gid of location, data: shortest calm of location
+        indices: gids of location, data: shortest calm of location.
     calm_lengths : Dictionary
-        keys: gid of weather location, data: array
-        Length of the single calms for each location
+        keys: gids of weather location, data: array
+        Length of the single calms for each location.
     """
     calms_max, calms_min, calm_lengths = {}, {}, {}
     for key in calms_dict:
@@ -125,7 +125,7 @@ def calculate_calms(calms_dict):
 
 def calms_frequency(calm_lengths, min_length):
     """
-    Write frequency of calms with length >= min_length into arrays for each
+    Finds the frequency of calms with length >= min_length for each
     location.
     """
     calms_freq = {}
@@ -235,8 +235,10 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
 
 def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
                    ylabel=None, filename_plot='plot_histogram.png',
-                   save_folder='Plots', save_figure=True, maximum_bin=1200):
-    """ calms should have the coastdat region gid as index and the values
+                   save_folder='Plots', save_figure=True, maximum_bin=1200,
+                   ylim=None):
+    """
+    calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
     Histogram contains longest calms of each location.
     """
