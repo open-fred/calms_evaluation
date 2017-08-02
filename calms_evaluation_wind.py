@@ -15,10 +15,10 @@ from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
 power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
-min_lengths = [24.0, 7*24.0]  # Minimum calm lengths for frequency of calms
 load_multi_weather = True  # False if you use a year you haven't dumped yet
 load_wind_feedin = True  # False if you use a year you haven't dumped yet
 load_pv_feedin = False  # False if you use a year you haven't dumped yet
+calms_filtered_load = True  # False is you haven't dumped the dictionary yet
 conn = db.connection(section='reiner')
 show_plot = False
 save_figure = True
@@ -27,7 +27,6 @@ filter = [
     'unfiltered',
     'filtered'
 ]  # Filter or don't filter peaks (or both)
-calms_filtered_load = True  # False is you haven't dumped the dictionary yet
 
 # ----------------------- Plots and their parameters ------------------------ #
 # The following plots are created:
@@ -39,6 +38,7 @@ geoplots = [
 scale_parameter = None  # If None: standardization with maximum calm length
 save_folder1 = 'Plots'
 cmapname = 'inferno_r'
+min_lengths = [24.0, 7*24.0]  # Minimum calm lengths for frequency of calms
 
 # Histograms (and parameters)
 histograms = [
