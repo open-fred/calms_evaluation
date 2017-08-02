@@ -108,11 +108,11 @@ for i in range(len(power_limit)):
         legend_label = 'Calm histogram Germany{0} power limit < {1}%'.format(
             year, int(power_limit[i]*100)) + string
         plot_histogram(calms_max, show_plot=False, legend_label=legend_label,
-                       xlabel='Length of calms in h', ylabel='Number of calms',
-                       filename_plot='Calm_histogram_{0}_{1}'.format(
+                       x_label='Length of calms in h', y_label='Number of calms',
+                       filename_plot='Histogram_maximum_calms_{0}_{1}'.format(
                            year, power_limit[i]) + string + '.png',
-                       save_figure=True, save_folder='Plots', maximum_bin=2000,
-                       ylimit=450)
+                       save_figure=True, save_folder='Plots', y_limit=None,
+                       x_limit=2000, bin_width=50, tick_width=200)
         # print(str(time.clock() - t0) + ' seconds since t0')
 
 # --------------------------- Average wind speed ---------------------------- #

@@ -233,10 +233,10 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     return
 
 
-def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
-                   ylabel=None, filename_plot='plot_histogram.png',
-                   save_folder='Plots', save_figure=True, maximum_bin=1200,
-                   ylimit=None):
+def plot_histogram(calms, show_plot=True, legend_label=None, x_label=None,
+                   y_label=None, filename_plot='plot_histogram.png',
+                   save_folder='Plots', save_figure=True, y_limit=None,
+                   x_limit=1200, bin_width=50, tick_width=100):
     """
     calms should have the coastdat region gid as index and the values
     that are plotted in the column 'results'.
@@ -246,13 +246,14 @@ def plot_histogram(calms, show_plot=True, legend_label=None, xlabel=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, bins=np.arange(0, maximum_bin, 50), normed=False)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.xticks(np.linspace(0, maximum_bin, 13,
-                           endpoint=True))
-    if ylimit:
-        plt.ylim(ymax=ylimit)
+    plt.hist(calms_sorted, bins=np.arange(0, x_limit + 1, bin_width), normed=False)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.xticks(np.arange(0, x_limit + 1, tick_width))
+    if y_limit:
+        plt.ylim(ymax=y_limit)
+    if x_limit:
+        plt.xlim(xmax=x_limit)
     plt.title(legend_label)
     if show_plot:
         plt.show()
