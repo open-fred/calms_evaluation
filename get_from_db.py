@@ -236,7 +236,7 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
 
 def plot_histogram(calms, show_plot=True, legend_label=None, x_label=None,
                    y_label=None, save_folder='Plots', save_figure=True,
-                   y_limit=None, x_limit=1200, bin_width=50, tick_freq=100,
+                   y_limit=None, x_limit=None, bin_width=50, tick_freq=100,
                    filename_plot='plot_histogram.png'):
     """
     calms should have the coastdat region gid as index and the values
@@ -247,11 +247,15 @@ def plot_histogram(calms, show_plot=True, legend_label=None, x_label=None,
     calms_sorted = np.sort(np.array(calms['results']))
     # plot
     fig = plt.figure()
-    plt.hist(calms_sorted, bins=np.arange(0, x_limit + 1, bin_width),
+    if x_limit:
+        x_max = x_limit
+    else:
+        x_max = max(calms_sorted)
+    plt.hist(calms_sorted, bins=np.arange(0, x_max + 1, bin_width),
              normed=False)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.xticks(np.arange(0, x_limit + 1, tick_freq))
+    plt.xticks(np.arange(0, x_max + 1, tick_freq))
     if y_limit:
         plt.ylim(ymax=y_limit)
     if x_limit:
