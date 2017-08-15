@@ -156,20 +156,21 @@ for i in range(len(power_limit)):
                                                energy_source, year,
                                                power_limit[i], string))
         if 'frequency' in geoplots:
-            # Geoplot of calm lengths > certain calm length (min_lengths)
-            for j in range(len(min_lengths)):
-                frequencies = calms_frequency(calm_lengths, min_lengths[j])
-                legend_label = ('Frequency of calms >= ' +
-                                '{0} h in {1} power limit < {2}% {3}'.format(
-                                    int(min_lengths[j]), year,
-                                    int(power_limit[i] * 100), energy_source))
-                coastdat_geoplot(frequencies, conn, show_plot, legend_label,
-                                 save_figure, save_folder1, cmapname,
-                                 scale_parameter,
-                                 filename_plot='Frequency_' +
-                                               '{0}_{1}h_{2}_{3}.png'.format(
-                                                   energy_source,
-                                                   int(min_lengths[j]), year,
+            if k == 0:  # Creates Plot only for unfiltered calms
+                # Geoplot of calm lengths > certain calm length (min_lengths)
+                for j in range(len(min_lengths)):
+                    frequencies = calms_frequency(calm_lengths, min_lengths[j])
+                    legend_label = ('Frequency of calms >= ' +
+                                    '{0} h in {1} power limit < {2}% {3}'.format(
+                                        int(min_lengths[j]), year,
+                                        int(power_limit[i] * 100), energy_source))
+                    coastdat_geoplot(frequencies, conn, show_plot, legend_label,
+                                     save_figure, save_folder1, cmapname,
+                                     scale_parameter,
+                                     filename_plot='Frequency_' +
+                                                   '{0}_{1}h_{2}_{3}.png'.format(
+                                                       energy_source,
+                                                       int(min_lengths[j]), year,
                                                    power_limit[i]))
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
