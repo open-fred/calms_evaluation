@@ -139,7 +139,7 @@ for i in range(len(power_limit)):
     for k in range(len(dict_list)):
         if (k == 0 and 'unfiltered' in filter):
             string = ''
-        if (k == 1 or (k == 0 and 'filtered' in filter)):
+        if (k == 1 or (k == 0 and 'unfiltered' not in filter)):
             string = 'filtered'
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
         if 'longest_calms' in geoplots:
