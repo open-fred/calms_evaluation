@@ -113,7 +113,7 @@ if (energy_source == 'PV' or energy_source == 'Wind_PV'):
                       pickle_load=load_pv_feedin,
                       filename='pv_feedin_pickle_{0}.p'.format(year),
                       data_type='pv_feedin')
-
+# TODO: total sum of feedins for PV + Wind (feedin: Dictionary, keys: gids)
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
 print('Calculating calms...')
