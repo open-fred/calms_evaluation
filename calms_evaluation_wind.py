@@ -175,14 +175,14 @@ for i in range(len(power_limit)):
                                          year, power_limit[i]))
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
-            legend_label = ('Maximum calms Germany ' +
+            legend_label = ('Longest calms Germany ' +
                             '{0} power limit < {1}% {2} {3}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string))
             plot_histogram(calms_max, show_plot, legend_label, x_label,
                            y_label, save_folder2, save_figure, y_limit,
                            x_limit, bin_width, tick_freq,
-                           filename_plot='Histogram_maximum_calms_' +
+                           filename_plot='Histogram_longest_calms_' +
                                          '_{0}_{1}_{2}_{3}.png'.format(
                                              energy_source, year,
                                              power_limit[i], string))
