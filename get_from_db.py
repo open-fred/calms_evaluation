@@ -205,7 +205,7 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
         data=coastdat_de['results_scaled'], color='data', cmapname=cmapname)
     coastdat_plot.plot(edgecolor='')
     coastdat_plot.draw_legend(legendlabel=legend_label,
-        interval=(0, int(scale_parameter)))
+        interval=(0, int(scale_parameter)), integer=True)
 
     # plot Germany with regions
     germany = {
