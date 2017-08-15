@@ -50,7 +50,7 @@ x_label = 'Length of calms in h'  # None or string
 y_label = 'Number of calms'  # None or string
 save_folder2 = save_folder1
 y_limit = 500  # None or integer
-x_limit = 2000  # None or integer
+x_limit = 1200  # None or integer
 bin_width = 50  # Integer
 tick_freq = 200  # Frequency of x-ticks
 
