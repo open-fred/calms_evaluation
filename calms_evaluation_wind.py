@@ -39,7 +39,7 @@ geoplots = [
 scale_parameter = None  # If None: standardization with maximum calm length
 save_folder1 = 'Plots'
 cmapname = 'inferno_r'
-min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency of calms
+min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency plot
 
 # Histograms (and parameters)
 histograms = [
@@ -160,18 +160,18 @@ for i in range(len(power_limit)):
                 # Geoplot of calm lengths > certain calm length (min_lengths)
                 for j in range(len(min_lengths)):
                     frequencies = calms_frequency(calm_lengths, min_lengths[j])
-                    legend_label = ('Frequency of calms >= ' +
-                                    '{0} h in {1} power limit < {2}% {3}'.format(
-                                        int(min_lengths[j]), year,
-                                        int(power_limit[i] * 100), energy_source))
-                    coastdat_geoplot(frequencies, conn, show_plot, legend_label,
-                                     save_figure, save_folder1, cmapname,
-                                     scale_parameter,
-                                     filename_plot='Frequency_' +
-                                                   '{0}_{1}h_{2}_{3}.png'.format(
-                                                       energy_source,
-                                                       int(min_lengths[j]), year,
-                                                   power_limit[i]))
+                    legend_label = (
+                        'Frequency of calms >= ' +
+                        '{0} h in {1} power limit < {2}% {3}'.format(
+                            int(min_lengths[j]), year,
+                            int(power_limit[i] * 100), energy_source))
+                    coastdat_geoplot(frequencies, conn, show_plot,
+                                     legend_label, save_figure, save_folder1,
+                                     cmapname, scale_parameter,
+                                     filename_plot=
+                                     'Frequency_{0}_{1}h_{2}_{3}.png'.format(
+                                         energy_source, int(min_lengths[j]),
+                                         year, power_limit[i]))
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
             legend_label = ('Maximum calms Germany' +
@@ -179,8 +179,8 @@ for i in range(len(power_limit)):
                                 year, int(power_limit[i]*100), energy_source,
                                 string))
             plot_histogram(calms_max, show_plot, legend_label, x_label,
-                           y_label, save_folder2, save_figure, y_limit, x_limit,
-                           bin_width, tick_freq,
+                           y_label, save_folder2, save_figure, y_limit,
+                           x_limit, bin_width, tick_freq,
                            filename_plot='Histogram_maximum_calms_' +
                                          '_{0}_{1}_{2}_{3}.png'.format(
                                              energy_source, year,
