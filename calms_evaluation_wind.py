@@ -44,7 +44,7 @@ min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency plot
 # Histograms (and parameters)
 histograms = [
     'longest_calms',
-    'all_calms'
+    # 'all_calms'
 ]
 x_label = 'Length of calms in h'  # None or string
 y_label = 'Number of calms'  # None or string
