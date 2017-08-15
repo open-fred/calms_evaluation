@@ -209,7 +209,7 @@ if 'average_wind_speed' in others:
     print('Calculating average wind speed...')
     wind_speed = calculate_avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
-    legend_label = 'Average wind speed_{0}'.format(year)
+    legend_label = 'Average wind speed {0}'.format(year)
     coastdat_geoplot(wind_speed, conn, show_plot, legend_label, save_figure,
                      save_folder3, cmapname,
                      filename_plot='Average_wind_speed_{0}'.format(year))
