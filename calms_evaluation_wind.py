@@ -144,7 +144,7 @@ for i in range(len(power_limit)):
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
         if 'longest_calms' in geoplots:
             # Geoplot of longest calms of each location
-            legend_label = ('Longest calms Germany ' +
+            legend_label = ('Longest calms in hours Germany ' +
                             '{0} power limit < {1}% {2} {3}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string))
@@ -174,7 +174,7 @@ for i in range(len(power_limit)):
                                          year, power_limit[i]))
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
-            legend_label = ('Maximum calms Germany' +
+            legend_label = ('Maximum calms Germany ' +
                             '{0} power limit < {1}% {2} {3}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string))
