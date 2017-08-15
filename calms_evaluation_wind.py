@@ -44,7 +44,7 @@ min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency plot
 # Histograms (and parameters)
 histograms = [
     'longest_calms',
-    'all_calms'
+    # 'all_calms'
 ]
 x_label = 'Length of calms in h'  # None or string
 y_label = 'Number of calms'  # None or string
@@ -139,7 +139,7 @@ for i in range(len(power_limit)):
     for k in range(len(dict_list)):
         if (k == 0 and 'unfiltered' in filter):
             string = ''
-        if (k == 1 or (k == 0 and 'filtered' in filter)):
+        if (k == 1 or (k == 0 and 'unfiltered' not in filter)):
             string = 'filtered'
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
         if 'longest_calms' in geoplots:
