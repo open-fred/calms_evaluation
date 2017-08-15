@@ -137,9 +137,9 @@ for i in range(len(power_limit)):
         dict_list.append(calms_dict_filtered)
     # Plots
     for k in range(len(dict_list)):
-        if k == 0:
+        if (k == 0 and 'unfiltered' in filter):
             string = ''
-        if k == 1:
+        if (k == 1 or (k == 0 and 'filtered' in filter)):
             string = 'filtered'
         calms_max, calms_min, calm_lengths = calculate_calms(dict_list[k])
         if 'longest_calms' in geoplots:
@@ -156,7 +156,8 @@ for i in range(len(power_limit)):
                                                energy_source, year,
                                                power_limit[i], string))
         if 'frequency' in geoplots:
-            if k == 0:  # Creates Plot only for unfiltered calms
+            # Creates Plot only for unfiltered calms
+            if (k == 0 and 'unfiltered' in filter):
                 # Geoplot of calm lengths > certain calm length (min_lengths)
                 for j in range(len(min_lengths)):
                     frequencies = calms_frequency(calm_lengths, min_lengths[j])
