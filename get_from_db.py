@@ -239,39 +239,50 @@ def filter_peaks(calms_dict, power_limit):
     return calms_dict_filtered
 
 
-def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
-                     save_figure=True, save_folder='Plots',
-                     cmapname='inferno_r', scale_parameter=None,
-                     filename_plot='plot.png'):
+def weather_geoplot(results_df, conn, weather_data='coastdat', show_plot=True,
+                    legend_label=None, save_figure=True, save_folder='Plots',
+                    cmapname='inferno_r', scale_parameter=None,
+                    filename_plot='plot.png'):
     """
-    results_df should have the coastdat region gid as index and the values
+    results_df should have the region gid as index and the values
     that are plotted (average wind speed, calm length, etc.) in the column
     'results'
     """
     fig = plt.figure()
-    # plot coastdat cells with results
-    coastdat_de = {
-        'table': 'de_grid',
-        'geo_col': 'geom',
+    # plot weather data cells with results
+    if weather_data == 'coastdat':
+        table = 'de_grid'
+        schema = 'coastdat'
+        geo_col = 'geom'
+    elif weather_data == 'merra':
+        table = 'merra_grid'
+        schema = 'public'
+        geo_col = 'geom_grid'
+
+    weather_plot_data = {
+        'table': table,
+        'geo_col': geo_col,
         'id_col': 'gid',
-        'schema': 'coastdat',
+        'schema': schema,
         'simp_tolerance': '0.01',
         'where_col': 'gid',
         'where_cond': '> 0'
     }
-    coastdat_de = fetch_geometries(conn, **coastdat_de)
-    coastdat_de['geom'] = geoplot.postgis2shapely(coastdat_de.geom)
-    coastdat_de = coastdat_de.set_index('gid')  # set gid as index
-    coastdat_de = coastdat_de.join(results_df)  # join results
+    weather_plot_data = fetch_geometries(conn, **weather_plot_data)
+    weather_plot_data['geom'] = geoplot.postgis2shapely(weather_plot_data.geom)
+    weather_plot_data = weather_plot_data.set_index('gid')  # set gid as index
+    weather_plot_data = weather_plot_data.join(results_df)  # join results
     # scale results
     if not scale_parameter:
-        scale_parameter = max(coastdat_de['results'].dropna())
-    coastdat_de['results_scaled'] = coastdat_de['results'] / scale_parameter
-    coastdat_plot = geoplot.GeoPlotter(
-        geom=coastdat_de['geom'], bbox=(3, 16, 47, 56),
-        data=coastdat_de['results_scaled'], color='data', cmapname=cmapname)
-    coastdat_plot.plot(edgecolor='')
-    coastdat_plot.draw_legend(legendlabel=legend_label,
+        scale_parameter = max(weather_plot_data['results'].dropna())
+        weather_plot_data['results_scaled'] = (weather_plot_data['results'] /
+                                               scale_parameter)
+    weather_plot = geoplot.GeoPlotter(
+        geom=weather_plot_data['geom'], bbox=(3, 16, 47, 56),
+        data=weather_plot_data['results_scaled'], color='data',
+        cmapname=cmapname)
+    weather_plot.plot(edgecolor='')
+    weather_plot.draw_legend(legendlabel=legend_label,
         interval=(0, int(scale_parameter)), integer=True)
 
     # plot Germany with regions
@@ -286,8 +297,8 @@ def coastdat_geoplot(results_df, conn, show_plot=True, legend_label=None,
     germany = fetch_geometries(conn, **germany)
     germany['geom'] = geoplot.postgis2shapely(germany.geom)
 
-    coastdat_plot.geometries = germany['geom']
-    coastdat_plot.plot(facecolor='', edgecolor='white', linewidth=1)
+    weather_plot.geometries = germany['geom']
+    weather_plot.plot(facecolor='', edgecolor='white', linewidth=1)
 
     plt.tight_layout()
     plt.box(on=None)

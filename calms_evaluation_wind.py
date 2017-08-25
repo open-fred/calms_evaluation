@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 # import time
 import pickle
-#from feedinlib import powerplants as plants
-from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
+from feedinlib import powerplants as plants
+from get_from_db import (fetch_shape_germany, get_data, weather_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, create_calms_dict, calms_frequency,
                          filter_peaks)
@@ -131,8 +131,8 @@ for i in range(len(power_limit)):
         dict_list.append(calms_dict)
     if 'filtered' in filter:
         # Get all calms with filtered peaks
-        filename = 'calms_dict_filtered_pickle_{0}_{1}_{2}.p'.format(
-            year, energy_source, power_limit[i])
+        filename = 'calms_dict_filtered_pickle_{0}_{1}_{2}_{3}.p'.format(
+            weather_data, year, energy_source, power_limit[i])
         if calms_filtered_load:
             calms_dict_filtered = pickle.load(open(filename, 'rb'))
         else:
@@ -149,16 +149,16 @@ for i in range(len(power_limit)):
         if 'longest_calms' in geoplots:
             # Geoplot of longest calms of each location
             legend_label = ('Longest calms in hours Germany ' +
-                            '{0} power limit < {1}% {2} {3}'.format(
+                            '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
-                                string))
-            coastdat_geoplot(calms_max, conn, show_plot, legend_label,
-                             save_figure, save_folder1, cmapname,
-                             scale_parameter,
-                             filename_plot='Longest_calms_' +
-                                           '{0}_{1}_{2}_{3}.png'.format(
-                                               energy_source, year,
-                                               power_limit[i], string))
+                                string, weather_data))
+            weather_geoplot(calms_max, conn, weather_data, show_plot,
+                            legend_label, save_figure, save_folder1, cmapname,
+                            scale_parameter,
+                            filename_plot='Longest_calms_' +
+                                           '{0}_{1}_{2}_{3}_{4}.png'.format(
+                                               energy_source, weather_data,
+                                               year, power_limit[i], string))
         if 'frequency' in geoplots:
             # Creates Plot only for unfiltered calms
             if (k == 0 and 'unfiltered' in filter):
@@ -167,28 +167,30 @@ for i in range(len(power_limit)):
                     frequencies = calms_frequency(calm_lengths, min_lengths[j])
                     legend_label = (
                         'Frequency of calms >= ' +
-                        '{0} h in {1} power limit < {2}% {3}'.format(
+                        '{0} h in {1} power limit < {2}% {3} {4}'.format(
                             int(min_lengths[j]), year,
-                            int(power_limit[i] * 100), energy_source))
-                    coastdat_geoplot(frequencies, conn, show_plot,
-                                     legend_label, save_figure, save_folder1,
-                                     cmapname, scale_parameter,
-                                     filename_plot=
-                                     'Frequency_{0}_{1}h_{2}_{3}.png'.format(
-                                         energy_source, int(min_lengths[j]),
-                                         year, power_limit[i]))
+                            int(power_limit[i] * 100), energy_source,
+                            weather_data))
+                    weather_geoplot(frequencies, conn, weather_data, show_plot,
+                                    legend_label, save_figure, save_folder1,
+                                    cmapname, scale_parameter,
+                                    filename_plot=
+                                    'Frequency_{0}_{1}_{2}h_{3}_{4}.png'.format(
+                                         energy_source, weather_data,
+                                         int(min_lengths[j]), year,
+                                         power_limit[i]))
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
             legend_label = ('Longest calms Germany ' +
-                            '{0} power limit < {1}% {2} {3}'.format(
+                            '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
-                                string))
+                                string, weather_data))
             plot_histogram(calms_max, show_plot, legend_label, x_label,
                            y_label, save_folder2, save_figure, y_limit,
                            x_limit, bin_width, tick_freq,
                            filename_plot='Histogram_longest_calms_' +
-                                         '_{0}_{1}_{2}_{3}.png'.format(
-                                             energy_source, year,
+                                         '_{0}_{1}_{2}_{3}_{4}.png'.format(
+                                             energy_source, weather_data, year,
                                              power_limit[i], string))
         if 'all_calms' in histograms:
             # Histogram containing all calms of all location
@@ -197,15 +199,15 @@ for i in range(len(power_limit)):
                 calm_arr = np.append(calm_arr, calm_lengths[key])
             calm_df = pd.DataFrame(data=calm_arr, columns=['results'])
             legend_label = ('Calms Germany ' +
-                            '{0} power limit < {1}% {2} {3}'.format(
+                            '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i] * 100), energy_source,
-                                string))
+                                string, weather_data))
             plot_histogram(calm_df, show_plot, legend_label, x_label, y_label,
                            save_folder2, save_figure, y_limit, x_limit,
                            bin_width, tick_freq,
                            filename_plot='Histogram_calms_' +
-                                         '_{0}_{1}_{2}_{3}.png'.format(
-                                             energy_source, year,
+                                         '_{0}_{1}_{2}_{3}_{4}.png'.format(
+                                             energy_source, weather_data, year,
                                              power_limit[i], string))
 # print(str(time.clock() - t0) + ' seconds since t0')
 
@@ -214,10 +216,11 @@ if 'average_wind_speed' in others:
     print('Calculating average wind speed...')
     wind_speed = calculate_avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
-    legend_label = 'Average wind speed {0}'.format(year)
-    coastdat_geoplot(wind_speed, conn, show_plot, legend_label, save_figure,
-                     save_folder3, cmapname,
-                     filename_plot='Average_wind_speed_{0}'.format(year))
+    legend_label = 'Average wind speed {0} {1}'.format(year, weather_data)
+    weather_geoplot(wind_speed, conn, weather_data, show_plot, legend_label,
+                    save_figure, save_folder3, cmapname,
+                    filename_plot='Average_wind_speed_{0}_{1}'.format(
+                        year, weather_data))
 
 # # ---------------------------- Jahresdauerlinie ----------------------------- #
 # # Plot of "Jahresdauerlinie"
