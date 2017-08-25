@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 # import time
 import pickle
-from feedinlib import powerplants as plants
+#from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, create_calms_dict, calms_frequency,
@@ -14,6 +14,7 @@ from get_from_db import (fetch_shape_germany, get_data, coastdat_geoplot,
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
+weather_data = 'coastdat'  # 'coastdat' or 'merra'
 power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
 load_multi_weather = True  # False if you use a year you haven't dumped yet
 load_wind_feedin = True  # False if you use a year you haven't dumped yet
@@ -97,21 +98,24 @@ print(' ')
 print('Collecting weather objects...')
 multi_weather = get_data(conn=conn, year=year, geom=geom[0],
                          pickle_load=load_multi_weather,
-                         filename='multiweather_pickle_{0}.p'.format(year),
-                         data_type='multi_weather')
+                         filename='multiweather_{0}_{1}.p'.format(
+                             weather_data, year),
+                         data_type='multi_weather_{0}.p'.format(weather_data))
 
 # ------------------------------ Feedin data -------------------------------- #
 if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
     turbine = plants.WindPowerPlant(**enerconE126)
     feedin = get_data(power_plant=turbine, multi_weather=multi_weather,
                       pickle_load=load_wind_feedin,
-                      filename='windfeedin_pickle_{0}.p'.format(year),
+                      filename='windfeedin_{0}_{1}.p'.format(
+                          weather_data, year),
                       data_type='wind_feedin')
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
     module = plants.Photovoltaic(**advent210)
     feedin = get_data(power_plant=module, multi_weather=multi_weather,
                       pickle_load=load_pv_feedin,
-                      filename='pv_feedin_pickle_{0}.p'.format(year),
+                      filename='pv_feedin__{0}_{1}.p'.format(
+                          weather_data, year),
                       data_type='pv_feedin')
 # TODO: total sum of feedins for PV + Wind (feedin: Dictionary, keys: gids)
 # -------------------- Calms: Calculations and Geoplots --------------------- #
