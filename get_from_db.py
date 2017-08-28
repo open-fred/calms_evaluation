@@ -100,6 +100,7 @@ def create_multi_weather_from_merra_nc(conn, filename):
             geometry=geom, data_height=data_height,
             name=name)
         multi_weather.append(copy.deepcopy(feedin_object))
+    return multi_weather
 
 
 def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
@@ -110,7 +111,7 @@ def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
             data = coastdat.get_weather(conn, geom, year)
         elif data_type == 'multi_weather_merra':
             data = create_multi_weather_from_merra_nc(conn, filename)
-            filename = 'merra_' + str(year) + '.p'  # filename for dump
+            filename = 'multiweather_merra_' + str(year) + '.p'  # filename for dump
         elif data_type == 'wind_feedin':
             data = {}
             for i in range(len(multi_weather)):

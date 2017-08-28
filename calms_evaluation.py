@@ -71,13 +71,23 @@ coastDat2 = {
     'temp_air': 2,
     'v_wind': 10,
     'Z0': 0}
-
+Merra2 = {
+    'dhi': 0,
+    'dirhi': 0,
+    'pressure': 0,
+    'temp_air': 2,
+    'v_wind': 50,
+    'Z0': 0}
+if weather_data == 'coastdat':
+    data_height = coastDat2
+elif weather_data == 'merra':
+    data_height = Merra2
 # Specification of the wind turbines
 enerconE126 = {
     'h_hub': 135,
     'd_rotor': 127,
     'wind_conv_type': 'ENERCON E 126 7500',
-    'data_height': coastDat2}
+    'data_height': data_height}
 
 # Specification of the pv module
 advent210 = {
