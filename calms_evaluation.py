@@ -27,7 +27,6 @@ except ImportError:
 arguments = docopt(__doc__)
 print(arguments)
 
-# def main_function(**arguments):
 # ----------------------------- Set parameters ------------------------------ #
 year = arguments['--year']
 weather_data = 'coastdat'  # 'coastdat' or 'merra'
