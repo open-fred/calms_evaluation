@@ -126,7 +126,7 @@ multi_weather = get_data(conn=conn, year=year, geom=geom[0],
                          pickle_load=load_multi_weather,
                          filename='multiweather_{0}_{1}.p'.format(
                              weather_data, year),
-                         data_type='multi_weather_{0}.p'.format(weather_data))
+                         data_type='multi_weather_{0}'.format(weather_data))
 
 # ------------------------------ Feedin data -------------------------------- #
 if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
