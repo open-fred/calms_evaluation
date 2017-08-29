@@ -1,3 +1,11 @@
+'''
+Usage: plot_residual_load [options]
+
+Options:
+
+  -y, --year=YEAR   The weather year. Choose from 1998 to 2014.
+
+'''
 import oemof.db as db
 import geoplot
 import matplotlib.pyplot as plt
@@ -11,9 +19,16 @@ from get_from_db import (fetch_shape_germany, get_data, weather_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, create_calms_dict, calms_frequency,
                          filter_peaks)
+try:
+    from docopt import docopt
+except ImportError:
+    print("Unable to import docopt.\nIs the 'docopt' package installed?")
+
+arguments = docopt(__doc__)
+print(arguments)
 
 # ----------------------------- Set parameters ------------------------------ #
-year = 2011  # 1998 - 2014
+year = arguments['--year']
 weather_data = 'coastdat'  # 'coastdat' or 'merra'
 power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
 load_multi_weather = True  # False if you use a year you haven't dumped yet
