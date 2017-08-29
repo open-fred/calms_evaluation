@@ -53,7 +53,7 @@ geoplots = [
     'frequency'
 ]
 scale_parameter = None  # If None: standardization with maximum calm length
-save_folder1 = 'Plots'
+save_folder1 = 'calms_evaluation/Plots'
 cmapname = 'inferno_r'
 min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency plot
 
@@ -177,8 +177,8 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            weather_geoplot(calms_max, conn, weather_data, show_plot,
-                            legend_label, save_figure, save_folder1, cmapname,
+            weather_geoplot(calms_max, conn, save_folder1, weather_data, show_plot,
+                            legend_label, save_figure, cmapname,
                             scale_parameter,
                             filename_plot='Longest_calms_' +
                                            '{0}_{1}_{2}_{3}_{4}.png'.format(
@@ -196,8 +196,8 @@ for i in range(len(power_limit)):
                             int(min_lengths[j]), year,
                             int(power_limit[i] * 100), energy_source,
                             weather_data))
-                    weather_geoplot(frequencies, conn, weather_data, show_plot,
-                                    legend_label, save_figure, save_folder1,
+                    weather_geoplot(frequencies, conn, save_folder1, weather_data, show_plot,
+                                    legend_label, save_figure,
                                     cmapname, scale_parameter,
                                     filename_plot=
                                     'Frequency_{0}_{1}_{2}h_{3}_{4}.png'.format(
@@ -210,8 +210,8 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            plot_histogram(calms_max, show_plot, legend_label, x_label,
-                           y_label, save_folder2, save_figure, y_limit,
+            plot_histogram(calms_max, save_folder2, show_plot, legend_label, x_label,
+                           y_label, save_figure, y_limit,
                            x_limit, bin_width, tick_freq,
                            filename_plot='Histogram_longest_calms_' +
                                          '_{0}_{1}_{2}_{3}_{4}.png'.format(
@@ -242,8 +242,8 @@ if 'average_wind_speed' in others:
     wind_speed = calculate_avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
     legend_label = 'Average wind speed {0} {1}'.format(year, weather_data)
-    weather_geoplot(wind_speed, conn, weather_data, show_plot, legend_label,
-                    save_figure, save_folder3, cmapname,
+    weather_geoplot(wind_speed, conn, save_folder3, weather_data, show_plot, legend_label,
+                    save_figure, cmapname,
                     filename_plot='Average_wind_speed_{0}_{1}'.format(
                         year, weather_data))
 

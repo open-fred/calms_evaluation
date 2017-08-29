@@ -240,8 +240,8 @@ def filter_peaks(calms_dict, power_limit):
     return calms_dict_filtered
 
 
-def weather_geoplot(results_df, conn, weather_data='coastdat', show_plot=True,
-                    legend_label=None, save_figure=True, save_folder='Plots',
+def weather_geoplot(results_df, conn, save_folder, weather_data='coastdat', show_plot=True,
+                    legend_label=None, save_figure=True,
                     cmapname='inferno_r', scale_parameter=None,
                     filename_plot='plot.png'):
     """
@@ -313,8 +313,8 @@ def weather_geoplot(results_df, conn, weather_data='coastdat', show_plot=True,
     return
 
 
-def plot_histogram(calms, show_plot=True, legend_label=None, x_label=None,
-                   y_label=None, save_folder='Plots', save_figure=True,
+def plot_histogram(calms, save_folder, show_plot=True, legend_label=None, x_label=None,
+                   y_label=None, save_figure=True,
                    y_limit=None, x_limit=None, bin_width=50, tick_freq=100,
                    filename_plot='plot_histogram.png'):
     """
