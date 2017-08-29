@@ -27,14 +27,15 @@ except ImportError:
 arguments = docopt(__doc__)
 print(arguments)
 
+# def main_function(**arguments):
 # ----------------------------- Set parameters ------------------------------ #
 year = arguments['--year']
 weather_data = 'coastdat'  # 'coastdat' or 'merra'
 power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
-load_multi_weather = True  # False if you use a year you haven't dumped yet
-load_wind_feedin = True  # False if you use a year you haven't dumped yet
+load_multi_weather = False  # False if you use a year you haven't dumped yet
+load_wind_feedin = False  # False if you use a year you haven't dumped yet
 load_pv_feedin = False  # False if you use a year you haven't dumped yet
-calms_filtered_load = True  # False is you haven't dumped the dictionary yet
+calms_filtered_load = False  # False is you haven't dumped the dictionary yet
 conn = db.connection(section='reiner')
 show_plot = False
 save_figure = True
