@@ -1,0 +1,8 @@
+pandas >= 0.20.0
+windpowerlib == 0.0.4
+feedinlib == 0.0.11
+
+# packages not on PyPI
+-e git+https://github.com/oemof/oemof.db.git@dev#egg=oemof.db
+git+https://github.com/matplotlib/basemap.git
+git+https://github.com/rl-institut/geoplot.git
