@@ -3,7 +3,9 @@ Usage: plot_residual_load [options]
 
 Options:
 
-  -y, --year=YEAR   The weather year. Choose from 1998 to 2014.
+  -y, --year=YEAR        The weather year. Choose from 1998 to 2014.
+  -e, --energy_source=ES The energy source. Choose from 'Wind', 'PV'
+                         and 'Wind_PV'
 
 '''
 import oemof.db as db
@@ -38,7 +40,7 @@ calms_filtered_load = False  # False is you haven't dumped the dictionary yet
 conn = db.connection(section='reiner')
 show_plot = False
 save_figure = True
-energy_source = 'Wind'  # 'Wind', 'PV' or 'Wind_PV'
+energy_source = str(arguments['--energy_source'])
 # Filter or don't filter peaks (or both)
 filter = [
     'unfiltered',  # always calculated, but only plotted if not uncommented
