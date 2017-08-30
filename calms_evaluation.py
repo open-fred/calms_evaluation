@@ -57,7 +57,7 @@ geoplots = [
 scale_parameter = None  # If None: standardization with maximum calm length
 save_folder1 = 'calms_evaluation/Plots'
 cmapname = 'inferno_r'
-min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency plot
+min_lengths = [24.0, 48.0, 7*24.0, 14*24.0, 28*24.0]  # Minimum calm lengths for frequency plot
 
 # Histograms (and parameters)
 histograms = [
