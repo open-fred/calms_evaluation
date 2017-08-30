@@ -227,8 +227,8 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i] * 100), energy_source,
                                 string, weather_data))
-            plot_histogram(calm_df, show_plot, legend_label, x_label, y_label,
-                           save_folder2, save_figure, y_limit, x_limit,
+            plot_histogram(calm_df, save_folder2, show_plot, legend_label, x_label, y_label,
+                           save_figure, y_limit, x_limit,
                            bin_width, tick_freq,
                            filename_plot='Histogram_calms_' +
                                          '_{0}_{1}_{2}_{3}_{4}.png'.format(
