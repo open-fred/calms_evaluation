@@ -86,11 +86,18 @@ def create_multi_weather_from_merra_nc(conn, filename):
                            (df_merra.lon == df_lat_lon.loc[i, 'lon'])]
         data_df = data_df.drop(['lat', 'lon', 'timestamp'], 1)
         data_df = data_df.set_index(timestamp_series)
-        data_df = data_df.rename(columns={'v_50m': 'v_wind'})
+        data_df = data_df.rename(columns={'v_50m': 'v_wind',
+                                          'T': 'temp_air',
+                                          'p': 'pressure'})
         longitude = df_lat_lon.loc[i, 'lon']
         latitude = df_lat_lon.loc[i, 'lat']
         geom = Point(longitude, latitude)
-        data_height = {'v_wind': 50}
+        data_height = {'v_wind': 50,
+                       'temp_air': 2,
+                       'dhi': 0,
+                       'dirhi': 0,
+                       'pressure': 0,
+                       'Z0': 0}
         name = int(
             merra_gid_df[(merra_gid_df['long'] == longitude) & (
                           merra_gid_df['lat'] == latitude)].iloc[0]['gid'])
