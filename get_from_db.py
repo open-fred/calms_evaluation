@@ -116,7 +116,7 @@ def create_multi_weather_from_merra_nc(conn, filename):
 
 def calculate_pv_feedin(multi_weather, module_name, inverter_name,
                         azimuth, tilt, albedo):
-
+    print('Calculating PV feedin...')
     pv_feedin = {}
 
     smodule = {
@@ -128,7 +128,11 @@ def calculate_pv_feedin(multi_weather, module_name, inverter_name,
         'surface_tilt': tilt,
         'albedo': albedo}
 
+    number_of_weather_points = len(multi_weather)
     for i in range(len(multi_weather)):
+        if i % 50 == 0:
+            print('  ...weather object {0} from {1}'.format(
+                str(i), str(number_of_weather_points)))
         location = {'latitude': multi_weather[i].latitude,
                     'longitude': multi_weather[i].longitude}
 
