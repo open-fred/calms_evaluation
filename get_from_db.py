@@ -11,6 +11,10 @@ import copy
 from feedinlib.weather import FeedinWeather
 from shapely.geometry import Point
 import dateutil.parser
+import pvlib
+from pvlib.pvsystem import PVSystem
+from pvlib.location import Location
+from pvlib.modelchain import ModelChain
 
 
 def fetch_geometries(conn, **kwargs):
@@ -110,6 +114,46 @@ def create_multi_weather_from_merra_nc(conn, filename):
     return multi_weather
 
 
+def calculate_pv_feedin(multi_weather, module_name, inverter_name,
+                        azimuth, tilt, albedo):
+
+    pv_feedin = {}
+
+    smodule = {
+        'module_parameters': pvlib.pvsystem.retrieve_sam('sandiamod')[
+            module_name],
+        'inverter_parameters': pvlib.pvsystem.retrieve_sam('sandiainverter')[
+            inverter_name],
+        'surface_azimuth': azimuth,
+        'surface_tilt': tilt,
+        'albedo': albedo}
+
+    for i in range(len(multi_weather)):
+        location = {'latitude': multi_weather[i].latitude,
+                    'longitude': multi_weather[i].longitude}
+
+        weather = copy.deepcopy(multi_weather[i].data)
+        weather['ghi'] = weather['dhi'] + weather['dirhi']
+        weather['temp_air'] = weather.temp_air - 273.15
+        weather.rename(columns={'v_wind': 'wind_speed'},
+                       inplace=True)
+
+        p_peak = (
+            smodule['module_parameters'].Impo *
+            smodule['module_parameters'].Vmpo)
+
+        # pvlib's ModelChain
+        mc = ModelChain(PVSystem(**smodule), Location(**location))
+        mc.complete_irradiance(times=weather.index, weather=weather)
+        mc.run_model(times=weather.index, weather=weather)
+
+        feedin_scaled = mc.dc.p_mp.fillna(0) / p_peak
+        feedin_scaled.name = 'feedin'
+        pv_feedin[multi_weather[i].name] = feedin_scaled
+
+    return pv_feedin
+
+
 def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
              geom=None, pickle_load=True, filename='pickle_dump.p',
              data_type='multi_weather_coastdat'):
@@ -124,11 +168,9 @@ def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
             for i in range(len(multi_weather)):
                 data[multi_weather[i].name] = power_plant.feedin(
                     weather=multi_weather[i], installed_capacity=1)
+                data[multi_weather[i].name].name = 'feedin'
         elif data_type == 'pv_feedin':
-            data = {}
-            for i in range(len(multi_weather)):
-                data[multi_weather[i].name] = power_plant.feedin(
-                    weather=multi_weather[i], peak_power=1)
+            data = calculate_pv_feedin(multi_weather, **power_plant)
         pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
         data = pickle.load(open(filename, 'rb'))
@@ -223,7 +265,7 @@ def filter_peaks(calms_dict, power_limit):
         calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Filter out peaks
-        feedin_arr = np.array(df['feedin_wind_pp'])
+        feedin_arr = np.array(df['feedin'])
         calm_arr = np.array(df['calm'])
         i = 0
         while i <= (len(calm_arrays) - 1):

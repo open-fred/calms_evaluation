@@ -10,7 +10,7 @@ from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, weather_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, create_calms_dict, calms_frequency,
-                         filter_peaks)
+                         filter_peaks, calculate_pv_feedin)
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
@@ -90,8 +90,9 @@ enerconE126 = {
     'data_height': data_height}
 
 # Specification of the pv module
-advent210 = {
-    'module_name': 'Advent_Solar_Ventura_210___2008_',
+pv_module = {
+    'module_name': 'LG_LG290N1C_G3__2013_',
+    'inverter_name': 'ABB__MICRO_0_25_I_OUTD_US_208_208V__CEC_2014_',
     'azimuth': 180,
     'tilt': 60,
     'albedo': 0.2}
@@ -121,8 +122,7 @@ if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
                           weather_data, year),
                       data_type='wind_feedin')
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
-    module = plants.Photovoltaic(**advent210)
-    feedin = get_data(power_plant=module, multi_weather=multi_weather,
+    feedin = get_data(power_plant=pv_module, multi_weather=multi_weather,
                       pickle_load=load_pv_feedin,
                       filename='pv_feedin__{0}_{1}.p'.format(
                           weather_data, year),
