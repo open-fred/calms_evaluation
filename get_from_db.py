@@ -305,8 +305,8 @@ def weather_geoplot(results_df, conn, save_folder, scale_parameter, weather_data
     plt.tight_layout()
     plt.box(on=None)
 
-    if show_plot:
-        plt.show()
+    # if show_plot:
+        # plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
             os.path.dirname(__file__), '..', save_folder, filename_plot)))
