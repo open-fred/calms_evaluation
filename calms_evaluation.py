@@ -20,7 +20,7 @@ from feedinlib import powerplants as plants
 from get_from_db import (fetch_shape_germany, get_data, weather_geoplot,
                          calculate_avg_wind_speed, calculate_calms,
                          plot_histogram, create_calms_dict, calms_frequency,
-                         filter_peaks)
+                         filter_peaks, calculate_pv_feedin)
 try:
     from docopt import docopt
 except ImportError:
@@ -33,10 +33,10 @@ print(arguments)
 year = arguments['--year']
 weather_data = 'coastdat'  # 'coastdat' or 'merra'
 power_limit = [0.03, 0.05, 0.1]  # Must be list or array even if only one entry
-load_multi_weather = False  # False if you use a year you haven't dumped yet
-load_wind_feedin = False  # False if you use a year you haven't dumped yet
+load_multi_weather = True  # False if you use a year you haven't dumped yet
+load_wind_feedin = True  # False if you use a year you haven't dumped yet
 load_pv_feedin = False  # False if you use a year you haven't dumped yet
-calms_filtered_load = False  # False is you haven't dumped the dictionary yet
+calms_filtered_load = True  # False is you haven't dumped the dictionary yet
 conn = db.connection(section='reiner')
 show_plot = False
 save_figure = True
@@ -107,8 +107,9 @@ enerconE126 = {
     'data_height': data_height}
 
 # Specification of the pv module
-advent210 = {
-    'module_name': 'Advent_Solar_Ventura_210___2008_',
+pv_module = {
+    'module_name': 'LG_LG290N1C_G3__2013_',
+    'inverter_name': 'ABB__MICRO_0_25_I_OUTD_US_208_208V__CEC_2014_',
     'azimuth': 180,
     'tilt': 60,
     'albedo': 0.2}
@@ -138,8 +139,7 @@ if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
                           weather_data, year),
                       data_type='wind_feedin')
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
-    module = plants.Photovoltaic(**advent210)
-    feedin = get_data(power_plant=module, multi_weather=multi_weather,
+    feedin = get_data(power_plant=pv_module, multi_weather=multi_weather,
                       pickle_load=load_pv_feedin,
                       filename='pv_feedin__{0}_{1}.p'.format(
                           weather_data, year),

@@ -11,6 +11,10 @@ import copy
 from feedinlib.weather import FeedinWeather
 from shapely.geometry import Point
 import dateutil.parser
+import pvlib
+from pvlib.pvsystem import PVSystem
+from pvlib.location import Location
+from pvlib.modelchain import ModelChain
 
 
 def fetch_geometries(conn, **kwargs):
@@ -86,11 +90,18 @@ def create_multi_weather_from_merra_nc(conn, filename):
                            (df_merra.lon == df_lat_lon.loc[i, 'lon'])]
         data_df = data_df.drop(['lat', 'lon', 'timestamp'], 1)
         data_df = data_df.set_index(timestamp_series)
-        data_df = data_df.rename(columns={'v_50m': 'v_wind'})
+        data_df = data_df.rename(columns={'v_50m': 'v_wind',
+                                          'T': 'temp_air',
+                                          'p': 'pressure'})
         longitude = df_lat_lon.loc[i, 'lon']
         latitude = df_lat_lon.loc[i, 'lat']
         geom = Point(longitude, latitude)
-        data_height = {'v_wind': 50}
+        data_height = {'v_wind': 50,
+                       'temp_air': 2,
+                       'dhi': 0,
+                       'dirhi': 0,
+                       'pressure': 0,
+                       'Z0': 0}
         name = int(
             merra_gid_df[(merra_gid_df['long'] == longitude) & (
                           merra_gid_df['lat'] == latitude)].iloc[0]['gid'])
@@ -101,6 +112,50 @@ def create_multi_weather_from_merra_nc(conn, filename):
             name=name)
         multi_weather.append(copy.deepcopy(feedin_object))
     return multi_weather
+
+
+def calculate_pv_feedin(multi_weather, module_name, inverter_name,
+                        azimuth, tilt, albedo):
+    print('Calculating PV feedin...')
+    pv_feedin = {}
+
+    smodule = {
+        'module_parameters': pvlib.pvsystem.retrieve_sam('sandiamod')[
+            module_name],
+        'inverter_parameters': pvlib.pvsystem.retrieve_sam('sandiainverter')[
+            inverter_name],
+        'surface_azimuth': azimuth,
+        'surface_tilt': tilt,
+        'albedo': albedo}
+
+    number_of_weather_points = len(multi_weather)
+    for i in range(len(multi_weather)):
+        if i % 50 == 0:
+            print('  ...weather object {0} from {1}'.format(
+                str(i), str(number_of_weather_points)))
+        location = {'latitude': multi_weather[i].latitude,
+                    'longitude': multi_weather[i].longitude}
+
+        weather = copy.deepcopy(multi_weather[i].data)
+        weather['ghi'] = weather['dhi'] + weather['dirhi']
+        weather['temp_air'] = weather.temp_air - 273.15
+        weather.rename(columns={'v_wind': 'wind_speed'},
+                       inplace=True)
+
+        p_peak = (
+            smodule['module_parameters'].Impo *
+            smodule['module_parameters'].Vmpo)
+
+        # pvlib's ModelChain
+        mc = ModelChain(PVSystem(**smodule), Location(**location))
+        mc.complete_irradiance(times=weather.index, weather=weather)
+        mc.run_model(times=weather.index, weather=weather)
+
+        feedin_scaled = mc.dc.p_mp.fillna(0) / p_peak
+        feedin_scaled.name = 'feedin'
+        pv_feedin[multi_weather[i].name] = feedin_scaled
+
+    return pv_feedin
 
 
 def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
@@ -117,11 +172,9 @@ def get_data(conn=None, power_plant=None, multi_weather=None, year=None,
             for i in range(len(multi_weather)):
                 data[multi_weather[i].name] = power_plant.feedin(
                     weather=multi_weather[i], installed_capacity=1)
+                data[multi_weather[i].name].name = 'feedin'
         elif data_type == 'pv_feedin':
-            data = {}
-            for i in range(len(multi_weather)):
-                data[multi_weather[i].name] = power_plant.feedin(
-                    weather=multi_weather[i], peak_power=1)
+            data = calculate_pv_feedin(multi_weather, **power_plant)
         pickle.dump(data, open(filename, 'wb'))
     if pickle_load:
         data = pickle.load(open(filename, 'rb'))
@@ -216,7 +269,7 @@ def filter_peaks(calms_dict, power_limit):
         calms, = np.where(df['calm'] != 'no_calm')
         calm_arrays = np.split(calms, np.where(np.diff(calms) != 1)[0] + 1)
         # Filter out peaks
-        feedin_arr = np.array(df['feedin_wind_pp'])
+        feedin_arr = np.array(df['feedin'])
         calm_arr = np.array(df['calm'])
         i = 0
         while i <= (len(calm_arrays) - 1):
