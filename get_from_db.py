@@ -240,9 +240,9 @@ def filter_peaks(calms_dict, power_limit):
     return calms_dict_filtered
 
 
-def weather_geoplot(results_df, conn, save_folder, weather_data='coastdat', show_plot=True,
+def weather_geoplot(results_df, conn, save_folder, scale_parameter, weather_data='coastdat', show_plot=True,
                     legend_label=None, save_figure=True,
-                    cmapname='inferno_r', scale_parameter=None,
+                    cmapname='inferno_r',
                     filename_plot='plot.png'):
     """
     results_df should have the region gid as index and the values
@@ -276,8 +276,9 @@ def weather_geoplot(results_df, conn, save_folder, weather_data='coastdat', show
     # scale results
     if not scale_parameter:
         scale_parameter = max(weather_plot_data['results'].dropna())
-        weather_plot_data['results_scaled'] = (weather_plot_data['results'] /
-                                               scale_parameter)
+
+    weather_plot_data['results_scaled'] = (weather_plot_data['results'] /
+                                           scale_parameter)
     weather_plot = geoplot.GeoPlotter(
         geom=weather_plot_data['geom'], bbox=(3, 16, 47, 56),
         data=weather_plot_data['results_scaled'], color='data',
