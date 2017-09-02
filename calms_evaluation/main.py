@@ -7,10 +7,10 @@ import pandas as pd
 # import time
 import pickle
 from feedinlib import powerplants as plants
-from get_from_db import (fetch_shape_germany, get_data, weather_geoplot,
-                         calculate_avg_wind_speed, calculate_calms,
-                         plot_histogram, create_calms_dict, calms_frequency,
-                         filter_peaks, calculate_pv_feedin)
+from tools import fetch_shape_germany, get_data
+from plots import geo_plot, histogram
+from evaluations import (calculate_avg_wind_speed, calculate_calms,
+                         create_calms_dict, calms_frequency, filter_peaks)
 
 # ----------------------------- Set parameters ------------------------------ #
 year = 2011  # 1998 - 2014
@@ -162,7 +162,7 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            weather_geoplot(calms_max, conn, weather_data, show_plot,
+            geo_plot(calms_max, conn, weather_data, show_plot,
                             legend_label, save_figure, save_folder1, cmapname,
                             scale_parameter,
                             filename_plot='Longest_calms_' +
@@ -181,7 +181,7 @@ for i in range(len(power_limit)):
                             int(min_lengths[j]), year,
                             int(power_limit[i] * 100), energy_source,
                             weather_data))
-                    weather_geoplot(frequencies, conn, weather_data, show_plot,
+                    geo_plot(frequencies, conn, weather_data, show_plot,
                                     legend_label, save_figure, save_folder1,
                                     cmapname, scale_parameter,
                                     filename_plot=
@@ -195,7 +195,7 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            plot_histogram(calms_max, show_plot, legend_label, x_label,
+            histogram(calms_max, show_plot, legend_label, x_label,
                            y_label, save_folder2, save_figure, y_limit,
                            x_limit, bin_width, tick_freq,
                            filename_plot='Histogram_longest_calms_' +
@@ -212,7 +212,7 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i] * 100), energy_source,
                                 string, weather_data))
-            plot_histogram(calm_df, show_plot, legend_label, x_label, y_label,
+            histogram(calm_df, show_plot, legend_label, x_label, y_label,
                            save_folder2, save_figure, y_limit, x_limit,
                            bin_width, tick_freq,
                            filename_plot='Histogram_calms_' +
@@ -227,7 +227,7 @@ if 'average_wind_speed' in others:
     wind_speed = calculate_avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
     legend_label = 'Average wind speed {0} {1}'.format(year, weather_data)
-    weather_geoplot(wind_speed, conn, weather_data, show_plot, legend_label,
+    geo_plot(wind_speed, conn, weather_data, show_plot, legend_label,
                     save_figure, save_folder3, cmapname,
                     filename_plot='Average_wind_speed_{0}_{1}'.format(
                         year, weather_data))
