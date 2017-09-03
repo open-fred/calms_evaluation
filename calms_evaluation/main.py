@@ -66,29 +66,24 @@ save_folder3 = save_folder1
 # ---------------------- Weather and power plant data ----------------------- #
 # Specification of the weather data set CoastDat2
 coastDat2 = {
-    'dhi': 0,
-    'dirhi': 0,
     'pressure': 0,
     'temp_air': 2,
     'v_wind': 10,
     'Z0': 0}
 Merra2 = {
-    'dhi': 0,
-    'dirhi': 0,
     'pressure': 0,
     'temp_air': 2,
     'v_wind': 50,
     'Z0': 0}
 if weather_data == 'coastdat':
-    data_height = coastDat2
+    weather_data_height = coastDat2
 elif weather_data == 'merra':
-    data_height = Merra2
-# Specification of the wind turbines
+    weather_data_height = Merra2
+# Specification of the wind turbine
 enerconE126 = {
-    'h_hub': 135,
-    'd_rotor': 127,
-    'wind_conv_type': 'ENERCON E 126 7500',
-    'data_height': data_height}
+    'turbine_name': 'ENERCON E 126 7500',
+    'hub_height': 135,
+    'rotor_diameter': 127}
 
 # Specification of the pv module
 pv_module = {
@@ -121,7 +116,8 @@ if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
                              filename='windfeedin_{0}_{1}.p'.format(
                                  weather_data, year),
                              type='wind', multi_weather=multi_weather,
-                             power_plant = turbine)
+                             power_plant=turbine,
+                             weather_data_height=weather_data_height)
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
     feedin = get_feedin_data(load_pv_feedin,
                              filename='pv_feedin__{0}_{1}.p'.format(

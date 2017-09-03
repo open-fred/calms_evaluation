@@ -94,6 +94,7 @@ def create_merra_multi_weather(conn, filename):
     """
 
     #ToDo: add link to OPSD
+    #ToDo: check if units are the same as for coastdat data
 
     df_merra = pd.read_pickle(filename)
     # drop columns that are not needed
@@ -199,7 +200,8 @@ def get_weather_data(pickle_load, filename='pickle_dump.p', weather_data=None,
 
 
 def get_feedin_data(pickle_load, filename='pickle_dump.p', type=None,
-                    multi_weather=None,  power_plant=None):
+                    multi_weather=None,  power_plant=None,
+                    weather_data_height=None):
     """
     Helper function to load pickled feed-in data or retrieve data and dump it.
 
@@ -219,6 +221,10 @@ def get_feedin_data(pickle_load, filename='pickle_dump.p', type=None,
     power_plant : dict
         Dictionary containing PV module or wind power plant information to use
         for feed-in calculation. Default: None.
+    weather_data_height : dict
+        Dictionary containing the height in m the weather data applies to. Must
+        have the keys 'pressure', 'temp_air', 'v_wind', and 'Z0'.
+        Default: None.
 
     Returns
     -------
@@ -231,11 +237,7 @@ def get_feedin_data(pickle_load, filename='pickle_dump.p', type=None,
         data = pickle.load(open(filename, 'rb'))
     else:
         if type == 'wind':
-            data = {}
-            for i in range(len(multi_weather)):
-                data[multi_weather[i].name] = power_plant.feedin(
-                    weather=multi_weather[i], installed_capacity=1)
-                data[multi_weather[i].name].name = 'feedin'
+            data = feedin.wind(multi_weather, weather_data_height, power_plant)
         elif type == 'pv':
             data = feedin.pv(multi_weather, **power_plant)
         pickle.dump(data, open(filename, 'wb'))

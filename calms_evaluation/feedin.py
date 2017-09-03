@@ -4,12 +4,14 @@ import pvlib
 from pvlib.pvsystem import PVSystem
 from pvlib.location import Location
 from pvlib.modelchain import ModelChain
+from windpowerlib.modelchain import ModelChain as ModelChainWind
+from windpowerlib.wind_turbine import WindTurbine
 
 
 def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
        albedo=0.2):
     r"""
-    Calculates specific PV feedin for each FeedinWeather object in
+    Calculates specific PV feed-in for each FeedinWeather object in
     multi_weather using the pvlib's ModelChain.
 
     Parameters
@@ -34,7 +36,7 @@ def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
     -------
     dict
         Dictionary with keys holding the FeedinWeather object's name and values
-        holding the corresponding specific PV feedin as pandas.Series.
+        holding the corresponding specific PV feed-in as pandas.Series.
 
     """
     #ToDo default values prüfen
@@ -87,3 +89,69 @@ def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
         pv_feedin[multi_weather[i].name] = feedin_scaled
 
     return pv_feedin
+
+
+def wind(multi_weather, weather_data_height, turbine):
+    r"""
+    Calculates specific wind energy feed-in for each FeedinWeather object in
+    multi_weather using the windpowerlib's ModelChain.
+
+    Parameters
+    ----------
+    multi_weather : list
+        `multi_weather` is a list of :class:`feedinlib.weather.FeedinWeather`
+        objects.
+    weather_data_height : dict
+        Dictionary containing the height in m the weather data applies to. Must
+        have the keys 'pressure', 'temp_air', 'v_wind', and 'Z0'.
+    turbine : dict
+        Dictionary containing parameters for the setup of the
+        :class:`windpowerlib.wind_turbine.WindTurbine` object.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys holding the FeedinWeather object's name and values
+        holding the corresponding specific wind energy feedin as pandas.Series.
+
+    """
+
+    #ToDo: make multiindex
+
+    logging.info('Calculating wind energy feed-in...')
+
+    # initialise WindTurbine object
+    wind_turbine = WindTurbine(**turbine)
+
+    wind_feedin = {}
+    number_of_weather_points = len(multi_weather)
+    for i in range(len(multi_weather)):
+
+        # logging info
+        if i % 50 == 0:
+            logging.info('  ...weather object {0} from {1}'.format(
+                str(i), str(number_of_weather_points)))
+
+        # set up weather dataframe to meet the needs of the windpowerlib
+        # must contain wind speed `wind_speed` in m/s, temperature
+        # `temperature` in K, roughness length `roughness_length` in m, and
+        # pressure `pressure` in Pa; columns of the DataFrame are a MultiIndex
+        # where the first level contains the variable name as string (e.g.
+        # 'wind_speed') and the second level contains the height as integer at
+        # which it applies (e.g. 10, if it was measured at a height of 10 m)
+        weather = copy.deepcopy(multi_weather[i].data)
+        weather['ghi'] = weather['dhi'] + weather['dirhi']
+        weather['temp_air'] = weather.temp_air - 273.15
+        weather.rename(columns={'v_wind': 'wind_speed',
+                                'temp_air': 'air_temperature',
+                                'Z0': 'roughness_length'},
+                       inplace=True)
+
+        # windpowerlib's ModelChain
+        mc = ModelChainWind(wind_turbine).run_model(weather)
+
+        feedin_scaled = mc.power_output / wind_turbine.nominal_power
+        feedin_scaled.name = 'feedin'
+        wind_feedin[multi_weather[i].name] = feedin_scaled
+
+    return wind_feedin
