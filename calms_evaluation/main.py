@@ -7,7 +7,8 @@ import pandas as pd
 # import time
 import pickle
 from feedinlib import powerplants as plants
-from tools import fetch_shape_germany, get_data
+from tools import (fetch_shape_germany_from_db, get_weather_data,
+                   get_feedin_data)
 from plots import geo_plot, histogram
 from evaluations import (calculate_avg_wind_speed, calculate_calms,
                          create_calms_dict, calms_frequency, filter_peaks)
@@ -98,7 +99,7 @@ pv_module = {
     'albedo': 0.2}
 
 # Get geometry for Germany for geoplot
-geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
+geom = geoplot.postgis2shapely(fetch_shape_germany_from_db(conn))
 # to plot smaller area
 #from shapely import geometry as geopy
 #geom = [geopy.Polygon(
@@ -107,26 +108,26 @@ geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
 # -------------------------- Get weather objects ---------------------------- #
 print(' ')
 print('Collecting weather objects...')
-multi_weather = get_data(conn=conn, year=year, geom=geom[0],
-                         pickle_load=load_multi_weather,
-                         filename='multiweather_{0}_{1}.p'.format(
-                             weather_data, year),
-                         data_type='multi_weather_{0}'.format(weather_data))
+multi_weather = get_weather_data(load_multi_weather,
+                                 filename='multiweather_{0}_{1}.p'.format(
+                                     weather_data, year),
+                                 weather_data=weather_data, conn=conn,
+                                 year=year, geom=geom[0])
 
 # ------------------------------ Feedin data -------------------------------- #
 if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
     turbine = plants.WindPowerPlant(**enerconE126)
-    feedin = get_data(power_plant=turbine, multi_weather=multi_weather,
-                      pickle_load=load_wind_feedin,
-                      filename='windfeedin_{0}_{1}.p'.format(
-                          weather_data, year),
-                      data_type='wind_feedin')
+    feedin = get_feedin_data(load_wind_feedin,
+                             filename='windfeedin_{0}_{1}.p'.format(
+                                 weather_data, year),
+                             type='wind', multi_weather=multi_weather,
+                             power_plant = turbine)
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
-    feedin = get_data(power_plant=pv_module, multi_weather=multi_weather,
-                      pickle_load=load_pv_feedin,
-                      filename='pv_feedin__{0}_{1}.p'.format(
-                          weather_data, year),
-                      data_type='pv_feedin')
+    feedin = get_feedin_data(load_pv_feedin,
+                             filename='pv_feedin__{0}_{1}.p'.format(
+                                 weather_data, year),
+                             type='pv', multi_weather=multi_weather,
+                             power_plant = pv_module)
 # TODO: total sum of feedins for PV + Wind (feedin: Dictionary, keys: gids)
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
