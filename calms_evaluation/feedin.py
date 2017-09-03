@@ -17,10 +17,10 @@ def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
     multi_weather : list
         `multi_weather` is a list of :class:`feedinlib.weather.FeedinWeather`
         objects.
-    module_name : string
+    module_name : String
         Name of PV module from Sandia Module database provided along with the
         pvlib.
-    inverter_name : string
+    inverter_name : String
         Name of inverter from CEC database provided along with the pvlib.
     azimuth : float
         Azimuth angle of the module. North=0, East=90, South=180, West=270.

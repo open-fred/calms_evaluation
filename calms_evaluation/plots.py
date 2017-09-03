@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import geoplot
 
-from tools import fetch_geometries
+from tools import fetch_geometries_from_db
 
 
 def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
@@ -21,9 +21,9 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
     conn : sqlalchemy connection object
         Use function `connection` from oemof.db to establish database
         connection.
-    legend_label : None or string
+    legend_label : None or String
         Default: None.
-    weather_data : string
+    weather_data : String
         Used to retrieve grid geometries from the database. Can be either
         'coastdat' or 'merra'. Default: 'coastdat'.
     show_plot : Boolean
@@ -31,11 +31,11 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
     save_figure : Boolean
         If True plot is stored to directory specified by `save_dir` under
         the name specified by `filename_plot`. Default: True.
-    filename_plot : string
+    filename_plot : String
         Name the plot is saved under. Default: 'geoplot.png'.
-    save_dir : string
+    save_dir : String
         Name of directory the plot is saved in. Default: Plots.
-    cmap_name : string
+    cmap_name : String
         Name of the colormap. Default: 'inferno_r'.
     scale_value : None or float
         Value used to scale the results and maximum legend value. If None the
@@ -66,7 +66,7 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
         'simp_tolerance': '0.01',
         'where_col': 'gid',
         'where_cond': '> 0'}
-    plot_data = fetch_geometries(conn, **grid_from_db)
+    plot_data = fetch_geometries_from_db(conn, **grid_from_db)
     plot_data['geom'] = geoplot.postgis2shapely(plot_data.geom)
     plot_data = plot_data.set_index('gid')  # set gid as index
 
@@ -96,7 +96,7 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
         'simp_tolerance': '0.01',
         'where_col': 'region_id',
         'where_cond': '> 0'}
-    germany = fetch_geometries(conn, **germany)
+    germany = fetch_geometries_from_db(conn, **germany)
     germany['geom'] = geoplot.postgis2shapely(germany.geom)
     grid_plot.geometries = germany['geom']
     grid_plot.plot(facecolor='', edgecolor='white', linewidth=1)
@@ -126,9 +126,9 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
         and the values to plot in the column 'results'.
     legend_label : None or string
         Default: None.
-    x_label : None or string
+    x_label : None or String
         Default: None.
-    y_label : None or string
+    y_label : None or String
         Default: None.
     x_limit : None or int
         Maximum value of x-axis. Default: None.
@@ -143,9 +143,9 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
     save_figure : Boolean
         If True plot is stored to directory specified by `save_dir` under
         the name specified by `filename_plot`. Default: True.
-    filename_plot : string
+    filename_plot : String
         Name the plot is saved under. Default: 'histogram.png'.
-    save_dir : string
+    save_dir : String
         Name of directory the plot is saved in. Default: Plots.
 
     """
@@ -196,9 +196,9 @@ def duration_curve(results_df, legend_label=None, x_label=None, y_label=None,
         and the values to plot in the column 'results'.
     legend_label : None or string
         Default: None.
-    x_label : None or string
+    x_label : None or String
         Default: None.
-    y_label : None or string
+    y_label : None or String
         Default: None.
     x_limit : None or int
         Maximum value of x-axis. Default: None.
@@ -209,9 +209,9 @@ def duration_curve(results_df, legend_label=None, x_label=None, y_label=None,
     save_figure : Boolean
         If True plot is stored to directory specified by `save_dir` under
         the name specified by `filename_plot`. Default: True.
-    filename_plot : string
+    filename_plot : String
         Name the plot is saved under. Default: 'duration_curve.png'.
-    save_dir : string
+    save_dir : String
         Name of directory the plot is saved in. Default: Plots.
 
     """
