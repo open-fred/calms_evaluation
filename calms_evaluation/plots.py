@@ -150,6 +150,11 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
 
     """
 
+    #ToDo results_df sollte kein df sein? besser series! innerhalb der funktion
+    #dann name der series zu results setzen
+    #ToDo Plots directory anlegen, falls es nicht existiert
+    #ToDo plot directory nicht unbedingt in selbem Ordner wie file
+
     data_sorted = np.sort(np.array(results_df['results']))
 
     fig = plt.figure()
@@ -177,30 +182,56 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
     plt.close()
 
 
-# def power_duration_curve(wind_feedin, show_plot=True, legend_label=None,
-#                               xlabel=None, ylabel=None,
-#                               filename_plot='plot_annual_curve.png',
-#     save_folder = 'Plots',
-#                               save_figure=True):
-#     """
-#     Plots the annual power duration curve(s) (Jahresdauerlinie) of wind feedin
-#     time series.
-#     """
-# #    for i in range(len(wind_feedin)):
-#     # Sort feedin
-#     feedin_sorted = np.sort(np.array(wind_feedin))
-#     # Plot
-#     fig = plt.figure()
-#     plt.plot(feedin_sorted)
-#     plt.xlabel(xlabel)
-#     plt.ylabel(ylabel)
-#     plt.title(legend_label)
-#     plt.ylim(ymax=0.1)
-#     plt.xlim(xmax=2500)
-#     if show_plot:
-#         plt.show()
-#     if save_figure:
-#         fig.savefig(os.path.abspath(os.path.join(
-#             os.path.dirname(__file__), '..', save_folder, filename_plot)))
-#     fig.set_tight_layout(True)
-#     plt.close()
+def duration_curve(results_df, legend_label=None, x_label=None, y_label=None,
+                   x_limit=None, y_limit=None, show_plot=True,
+                   save_figure=True, filename_plot='duration_curve.png',
+                   save_dir='Plots'):
+    r"""
+    Plots duration curve.
+
+    Parameters
+    ----------
+    results_df : pandas.DataFrame
+        DataFrame needs to have the name of the FeedinWeather objects as index
+        and the values to plot in the column 'results'.
+    legend_label : None or string
+        Default: None.
+    x_label : None or string
+        Default: None.
+    y_label : None or string
+        Default: None.
+    x_limit : None or int
+        Maximum value of x-axis. Default: None.
+    y_limit : None or int
+        Maximum value of y-axis. Default: None.
+    show_plot : Boolean
+        If True plot is shown. Default: True.
+    save_figure : Boolean
+        If True plot is stored to directory specified by `save_dir` under
+        the name specified by `filename_plot`. Default: True.
+    filename_plot : string
+        Name the plot is saved under. Default: 'duration_curve.png'.
+    save_dir : string
+        Name of directory the plot is saved in. Default: Plots.
+
+    """
+
+    data_sorted = np.sort(np.array(results_df['results']))
+
+    fig = plt.figure()
+    plt.plot(data_sorted)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(legend_label)
+    if y_limit:
+        plt.ylim(ymax=y_limit)
+    if x_limit:
+        plt.xlim(xmax=x_limit)
+
+    if show_plot:
+        plt.show()
+    if save_figure:
+        fig.savefig(os.path.abspath(os.path.join(
+            os.path.dirname(__file__), save_dir, filename_plot)))
+    fig.set_tight_layout(True)
+    plt.close()
