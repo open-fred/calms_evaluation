@@ -7,17 +7,49 @@ import geoplot
 from tools import fetch_geometries
 
 
-def geo_plot(results_df, conn, weather_data='coastdat', show_plot=True,
-                    legend_label=None, save_figure=True, save_folder='Plots',
-                    cmapname='inferno_r', scale_parameter=None,
-                    filename_plot='plot.png'):
+def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
+             show_plot=True, save_figure=True, filename_plot='plot.png',
+             save_dir='Plots', cmap_name='inferno_r', scale_value=None):
+    r"""
+    Plots results for every FeedinWeather object on a map of Germany.
+
+    Parameters
+    ----------
+    results_df : pandas.DataFrame
+        DataFrame needs to have the name of the FeedinWeather objects as index
+        and the values to plot in the column 'results'.
+    conn : sqlalchemy connection object
+        Use function `connection` from oemof.db to establish database
+        connection.
+    legend_label : None or string
+        Default: None.
+    weather_data : string
+        Used to retrieve grid geometries from the database. Can be either
+        'coastdat' or 'merra'. Default: 'coastdat'.
+    show_plot : Boolean
+        If True plot is shown. Default: True.
+    save_figure : Boolean
+        If True plot is stored to directory specified by `save_dir` under
+        the name specified by `filename_plot`. Default: True.
+    filename_plot : string
+        Name the plot is saved under. Default: 'plot.png'.
+    save_dir : string
+        Name of directory the plot is saved in. Default: Plots.
+    cmap_name : string
+        Name of the colormap. Default: 'inferno_r'.
+    scale_value : None or float
+        Value used to scale the results and maximum legend value. If None the
+        maximum value of the parameter that is plotted is used. Default: None.
+
     """
-    results_df should have the region gid as index and the values
-    that are plotted (average wind speed, calm length, etc.) in the column
-    'results'
-    """
+    #ToDo results_df sollte kein df sein? besser series! innerhalb der funktion
+    #dann name der series zu results setzen
+    #ToDo Plots directory anlegen, falls es nicht existiert
+    #ToDo plot directory nicht unbedingt in selbem Ordner wie file
+
     fig = plt.figure()
-    # plot weather data cells with results
+
+    # retrieve grid geometries from database
     if weather_data == 'coastdat':
         table = 'de_grid'
         schema = 'coastdat'
@@ -26,34 +58,36 @@ def geo_plot(results_df, conn, weather_data='coastdat', show_plot=True,
         table = 'merra_grid'
         schema = 'public'
         geo_col = 'geom_grid'
-
-    weather_plot_data = {
+    grid_from_db = {
         'table': table,
         'geo_col': geo_col,
         'id_col': 'gid',
         'schema': schema,
         'simp_tolerance': '0.01',
         'where_col': 'gid',
-        'where_cond': '> 0'
-    }
-    weather_plot_data = fetch_geometries(conn, **weather_plot_data)
-    weather_plot_data['geom'] = geoplot.postgis2shapely(weather_plot_data.geom)
-    weather_plot_data = weather_plot_data.set_index('gid')  # set gid as index
-    weather_plot_data = weather_plot_data.join(results_df)  # join results
-    # scale results
-    if not scale_parameter:
-        scale_parameter = max(weather_plot_data['results'].dropna())
-        weather_plot_data['results_scaled'] = (weather_plot_data['results'] /
-                                               scale_parameter)
-    weather_plot = geoplot.GeoPlotter(
-        geom=weather_plot_data['geom'], bbox=(3, 16, 47, 56),
-        data=weather_plot_data['results_scaled'], color='data',
-        cmapname=cmapname)
-    weather_plot.plot(edgecolor='')
-    weather_plot.draw_legend(legendlabel=legend_label,
-        interval=(0, int(scale_parameter)), integer=True)
+        'where_cond': '> 0'}
+    plot_data = fetch_geometries(conn, **grid_from_db)
+    plot_data['geom'] = geoplot.postgis2shapely(plot_data.geom)
+    plot_data = plot_data.set_index('gid')  # set gid as index
 
-    # plot Germany with regions
+    # join geometries with results
+    plot_data = plot_data.join(results_df)
+
+    # scale results
+    if not scale_value:
+        scale_value = max(plot_data['results'].dropna())
+    plot_data['results_scaled'] = plot_data['results'] / scale_value
+
+    # plot grid
+    grid_plot = geoplot.GeoPlotter(
+        geom=plot_data['geom'], bbox=(3, 16, 47, 56),
+        data=plot_data['results_scaled'], color='data',
+        cmapname=cmap_name)
+    grid_plot.plot(edgecolor='')
+    grid_plot.draw_legend(legendlabel=legend_label,
+        interval=(0, int(scale_value)), integer=True)
+
+    # plot map of Germany with federal states
     germany = {
         'table': 'deu3_21',
         'geo_col': 'geom',
@@ -64,9 +98,8 @@ def geo_plot(results_df, conn, weather_data='coastdat', show_plot=True,
         'where_cond': '> 0'}
     germany = fetch_geometries(conn, **germany)
     germany['geom'] = geoplot.postgis2shapely(germany.geom)
-
-    weather_plot.geometries = germany['geom']
-    weather_plot.plot(facecolor='', edgecolor='white', linewidth=1)
+    grid_plot.geometries = germany['geom']
+    grid_plot.plot(facecolor='', edgecolor='white', linewidth=1)
 
     plt.tight_layout()
     plt.box(on=None)
@@ -75,7 +108,7 @@ def geo_plot(results_df, conn, weather_data='coastdat', show_plot=True,
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', save_folder, filename_plot)))
+            os.path.dirname(__file__), save_dir, filename_plot)))
     plt.close()
     return
 

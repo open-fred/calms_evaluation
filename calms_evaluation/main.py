@@ -37,7 +37,7 @@ geoplots = [
     'longest_calms',
     'frequency'
 ]
-scale_parameter = None  # If None: standardization with maximum calm length
+scale_value = None  # If None: standardization with maximum calm length
 save_folder1 = 'Plots'
 cmapname = 'inferno_r'
 min_lengths = [24.0, 48.0, 7*24.0]  # Minimum calm lengths for frequency plot
@@ -162,13 +162,16 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            geo_plot(calms_max, conn, weather_data, show_plot,
-                            legend_label, save_figure, save_folder1, cmapname,
-                            scale_parameter,
-                            filename_plot='Longest_calms_' +
-                                           '{0}_{1}_{2}_{3}_{4}.png'.format(
-                                               energy_source, weather_data,
-                                               year, power_limit[i], string))
+            geo_plot(calms_max, conn,
+                     filename_plot='Longest_calms_' +
+                                   '{0}_{1}_{2}_{3}_{4}.png'.format(
+                                       energy_source, weather_data,
+                                       year, power_limit[i], string),
+                     legend_label=legend_label,
+                     weather_data=weather_data, show_plot=show_plot,
+                     save_figure=save_figure, save_dir=save_folder1,
+                     cmap_name=cmapname,
+                     scale_value=scale_value)
         if 'frequency' in geoplots:
             # Creates Plot only for unfiltered calms
             if (k == 0 and 'unfiltered' in filter):
@@ -181,14 +184,17 @@ for i in range(len(power_limit)):
                             int(min_lengths[j]), year,
                             int(power_limit[i] * 100), energy_source,
                             weather_data))
-                    geo_plot(frequencies, conn, weather_data, show_plot,
-                                    legend_label, save_figure, save_folder1,
-                                    cmapname, scale_parameter,
-                                    filename_plot=
-                                    'Frequency_{0}_{1}_{2}h_{3}_{4}.png'.format(
-                                         energy_source, weather_data,
-                                         int(min_lengths[j]), year,
-                                         power_limit[i]))
+                    geo_plot(frequencies, conn,
+                             filename_plot=(
+                                 'Frequency_{0}_{1}_{2}h_{3}_{4}.png'.format(
+                                    energy_source, weather_data,
+                                    int(min_lengths[j]), year,
+                                    power_limit[i])),
+                             legend_label=legend_label,
+                             weather_data=weather_data, show_plot=show_plot,
+                             save_figure=save_figure, save_dir=save_folder1,
+                             cmap_name=cmapname,
+                             scale_value=scale_value)
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
             legend_label = ('Longest calms Germany ' +
@@ -227,10 +233,13 @@ if 'average_wind_speed' in others:
     wind_speed = calculate_avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
     legend_label = 'Average wind speed {0} {1}'.format(year, weather_data)
-    geo_plot(wind_speed, conn, weather_data, show_plot, legend_label,
-                    save_figure, save_folder3, cmapname,
-                    filename_plot='Average_wind_speed_{0}_{1}'.format(
-                        year, weather_data))
+    geo_plot(wind_speed, conn,
+             filename_plot='Average_wind_speed_{0}_{1}'.format(
+                 year, weather_data),
+             legend_label=legend_label,
+             weather_data=weather_data, show_plot=show_plot,
+             save_figure=save_figure, save_dir=save_folder3,
+             cmap_name=cmapname)
 
 # # ---------------------------- Jahresdauerlinie ----------------------------- #
 # # Plot of "Jahresdauerlinie"
