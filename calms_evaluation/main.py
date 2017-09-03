@@ -201,13 +201,15 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            histogram(calms_max, show_plot, legend_label, x_label,
-                           y_label, save_folder2, save_figure, y_limit,
-                           x_limit, bin_width, tick_freq,
-                           filename_plot='Histogram_longest_calms_' +
-                                         '_{0}_{1}_{2}_{3}_{4}.png'.format(
-                                             energy_source, weather_data, year,
-                                             power_limit[i], string))
+            histogram(calms_max, legend_label=legend_label, x_label=x_label,
+                      y_label=y_label, x_limit=x_limit, y_limit=y_limit,
+                      bin_width=bin_width, tick_freq=tick_freq,
+                      show_plot=show_plot, save_figure=save_figure,
+                      filename_plot='Histogram_longest_calms_' +
+                                    '_{0}_{1}_{2}_{3}_{4}.png'.format(
+                                        energy_source, weather_data, year,
+                                        power_limit[i], string),
+                      save_dir=save_folder2)
         if 'all_calms' in histograms:
             # Histogram containing all calms of all location
             calm_arr = np.array([])
@@ -218,13 +220,15 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i] * 100), energy_source,
                                 string, weather_data))
-            histogram(calm_df, show_plot, legend_label, x_label, y_label,
-                           save_folder2, save_figure, y_limit, x_limit,
-                           bin_width, tick_freq,
-                           filename_plot='Histogram_calms_' +
-                                         '_{0}_{1}_{2}_{3}_{4}.png'.format(
-                                             energy_source, weather_data, year,
-                                             power_limit[i], string))
+            histogram(calm_df, legend_label=legend_label, x_label=x_label,
+                      y_label=y_label, x_limit=x_limit, y_limit=y_limit,
+                      bin_width=bin_width, tick_freq=tick_freq,
+                      show_plot=show_plot, save_figure=save_figure,
+                      filename_plot='Histogram_calms_' +
+                                    '_{0}_{1}_{2}_{3}_{4}.png'.format(
+                                        energy_source, weather_data, year,
+                                        power_limit[i], string),
+                      save_dir=save_folder2)
 # print(str(time.clock() - t0) + ' seconds since t0')
 
 # --------------------------- Average wind speed ---------------------------- #

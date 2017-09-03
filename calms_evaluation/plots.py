@@ -8,7 +8,7 @@ from tools import fetch_geometries
 
 
 def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
-             show_plot=True, save_figure=True, filename_plot='plot.png',
+             show_plot=True, save_figure=True, filename_plot='geoplot.png',
              save_dir='Plots', cmap_name='inferno_r', scale_value=None):
     r"""
     Plots results for every FeedinWeather object on a map of Germany.
@@ -32,7 +32,7 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
         If True plot is stored to directory specified by `save_dir` under
         the name specified by `filename_plot`. Default: True.
     filename_plot : string
-        Name the plot is saved under. Default: 'plot.png'.
+        Name the plot is saved under. Default: 'geoplot.png'.
     save_dir : string
         Name of directory the plot is saved in. Default: Plots.
     cmap_name : string
@@ -110,27 +110,54 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
         fig.savefig(os.path.abspath(os.path.join(
             os.path.dirname(__file__), save_dir, filename_plot)))
     plt.close()
-    return
 
 
-def histogram(calms, show_plot=True, legend_label=None, x_label=None,
-                   y_label=None, save_folder='Plots', save_figure=True,
-                   y_limit=None, x_limit=None, bin_width=50, tick_freq=100,
-                   filename_plot='plot_histogram.png'):
+def histogram(results_df, legend_label=None, x_label=None, y_label=None,
+              x_limit=None, y_limit=None, bin_width=50, tick_freq=100,
+              show_plot=True, save_figure=True, filename_plot='histogram.png',
+              save_dir='Plots'):
+    r"""
+    Plots histogram.
+
+    Parameters
+    ----------
+    results_df : pandas.DataFrame
+        DataFrame needs to have the name of the FeedinWeather objects as index
+        and the values to plot in the column 'results'.
+    legend_label : None or string
+        Default: None.
+    x_label : None or string
+        Default: None.
+    y_label : None or string
+        Default: None.
+    x_limit : None or int
+        Maximum value of x-axis. Default: None.
+    y_limit : None or int
+        Maximum value of y-axis. Default: None.
+    bin_width : int
+        Default: 50.
+    tick_freq : int
+        Tick frequency on x-axis. Default: 100.
+    show_plot : Boolean
+        If True plot is shown. Default: True.
+    save_figure : Boolean
+        If True plot is stored to directory specified by `save_dir` under
+        the name specified by `filename_plot`. Default: True.
+    filename_plot : string
+        Name the plot is saved under. Default: 'histogram.png'.
+    save_dir : string
+        Name of directory the plot is saved in. Default: Plots.
+
     """
-    calms should have the coastdat region gid as index and the values
-    that are plotted in the column 'results'.
-    Histogram contains longest calms of each location.
-    """
-    # sort calms
-    calms_sorted = np.sort(np.array(calms['results']))
-    # plot
+
+    data_sorted = np.sort(np.array(results_df['results']))
+
     fig = plt.figure()
     if x_limit:
         x_max = x_limit
     else:
-        x_max = max(calms_sorted)
-    plt.hist(calms_sorted, bins=np.arange(0, x_max + 1, bin_width),
+        x_max = max(data_sorted)
+    plt.hist(data_sorted, bins=np.arange(0, x_max + 1, bin_width),
              normed=False)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
@@ -140,11 +167,12 @@ def histogram(calms, show_plot=True, legend_label=None, x_label=None,
     if x_limit:
         plt.xlim(xmax=x_limit)
     plt.title(legend_label)
+
     if show_plot:
         plt.show()
     if save_figure:
         fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', save_folder, filename_plot)))
+            os.path.dirname(__file__), save_dir, filename_plot)))
     fig.set_tight_layout(True)
     plt.close()
 
