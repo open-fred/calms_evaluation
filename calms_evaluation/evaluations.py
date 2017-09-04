@@ -3,7 +3,22 @@ import numpy as np
 import copy
 
 
-def calculate_avg_wind_speed(multi_weather):
+def avg_wind_speed(multi_weather):
+    """
+    Helper function to load pickled feed-in data or retrieve data and dump it.
+
+    Parameters
+    ----------
+    multi_weather : list
+        `multi_weather` is a list of :class:`feedinlib.weather.FeedinWeather`
+        objects.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys holding the FeedinWeather object's name and values
+        holding the corresponding average wind speed.
+    """
     avg_wind_speed = {}
     for i in range(len(multi_weather)):
         avg_wind_speed[multi_weather[i].name] = np.mean(

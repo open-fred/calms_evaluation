@@ -10,7 +10,7 @@ from feedinlib import powerplants as plants
 from tools import (fetch_shape_germany_from_db, get_weather_data,
                    get_feedin_data)
 from plots import geo_plot, histogram
-from evaluations import (calculate_avg_wind_speed, calculate_calms,
+from evaluations import (avg_wind_speed, calculate_calms,
                          create_calms_dict, calms_frequency, filter_peaks)
 
 # ----------------------------- Set parameters ------------------------------ #
@@ -231,7 +231,7 @@ for i in range(len(power_limit)):
 # --------------------------- Average wind speed ---------------------------- #
 if 'average_wind_speed' in others:
     print('Calculating average wind speed...')
-    wind_speed = calculate_avg_wind_speed(multi_weather)
+    wind_speed = avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
     legend_label = 'Average wind speed {0} {1}'.format(year, weather_data)
     geo_plot(wind_speed, conn,
