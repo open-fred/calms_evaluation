@@ -17,10 +17,12 @@ import pandas as pd
 # import time
 import pickle
 from feedinlib import powerplants as plants
-from get_from_db import (fetch_shape_germany, get_data, weather_geoplot,
-                         calculate_avg_wind_speed, calculate_calms,
-                         plot_histogram, create_calms_dict, calms_frequency,
-                         filter_peaks, calculate_pv_feedin)
+from tools import (fetch_shape_germany_from_db, get_weather_data,
+                   get_feedin_data)
+from plots import geo_plot, histogram
+from evaluations import (avg_wind_speed, calculate_calms,
+                         create_calms_dict, calms_frequency, filter_peaks)
+
 try:
     from docopt import docopt
 except ImportError:
@@ -54,8 +56,8 @@ geoplots = [
     'longest_calms',
     'frequency'
 ]
-scale_parameter = None  # If None: standardization with maximum calm length
-save_folder1 = 'calms_evaluation/Plots'
+scale_value = None  # If None: standardization with maximum calm length
+save_folder1 = 'Plots'
 cmapname = 'inferno_r'
 min_lengths = [24.0, 48.0, 7*24.0, 14*24.0, 28*24.0]  # Minimum calm lengths for frequency plot
 
@@ -82,29 +84,24 @@ save_folder3 = save_folder1
 # ---------------------- Weather and power plant data ----------------------- #
 # Specification of the weather data set CoastDat2
 coastDat2 = {
-    'dhi': 0,
-    'dirhi': 0,
     'pressure': 0,
     'temp_air': 2,
     'v_wind': 10,
     'Z0': 0}
 Merra2 = {
-    'dhi': 0,
-    'dirhi': 0,
     'pressure': 0,
     'temp_air': 2,
     'v_wind': 50,
     'Z0': 0}
 if weather_data == 'coastdat':
-    data_height = coastDat2
+    weather_data_height = coastDat2
 elif weather_data == 'merra':
-    data_height = Merra2
-# Specification of the wind turbines
+    weather_data_height = Merra2
+# Specification of the wind turbine
 enerconE126 = {
-    'h_hub': 135,
-    'd_rotor': 127,
-    'wind_conv_type': 'ENERCON E 126 7500',
-    'data_height': data_height}
+    'turbine_name': 'ENERCON E 126 7500',
+    'hub_height': 135,
+    'rotor_diameter': 127}
 
 # Specification of the pv module
 pv_module = {
@@ -115,7 +112,7 @@ pv_module = {
     'albedo': 0.2}
 
 # Get geometry for Germany for geoplot
-geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
+geom = geoplot.postgis2shapely(fetch_shape_germany_from_db(conn))
 # to plot smaller area
 #from shapely import geometry as geopy
 #geom = [geopy.Polygon(
@@ -124,26 +121,27 @@ geom = geoplot.postgis2shapely(fetch_shape_germany(conn))
 # -------------------------- Get weather objects ---------------------------- #
 print(' ')
 print('Collecting weather objects...')
-multi_weather = get_data(conn=conn, year=year, geom=geom[0],
-                         pickle_load=load_multi_weather,
-                         filename='multiweather_{0}_{1}.p'.format(
-                             weather_data, year),
-                         data_type='multi_weather_{0}'.format(weather_data))
+multi_weather = get_weather_data(load_multi_weather,
+                                 filename='multiweather_{0}_{1}.p'.format(
+                                     weather_data, year),
+                                 weather_data=weather_data, conn=conn,
+                                 year=year, geom=geom[0])
 
 # ------------------------------ Feedin data -------------------------------- #
 if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
     turbine = plants.WindPowerPlant(**enerconE126)
-    feedin = get_data(power_plant=turbine, multi_weather=multi_weather,
-                      pickle_load=load_wind_feedin,
-                      filename='windfeedin_{0}_{1}.p'.format(
-                          weather_data, year),
-                      data_type='wind_feedin')
+    feedin = get_feedin_data(load_wind_feedin,
+                             filename='windfeedin_{0}_{1}.p'.format(
+                                 weather_data, year),
+                             type='wind', multi_weather=multi_weather,
+                             power_plant=turbine,
+                             weather_data_height=weather_data_height)
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
-    feedin = get_data(power_plant=pv_module, multi_weather=multi_weather,
-                      pickle_load=load_pv_feedin,
-                      filename='pv_feedin__{0}_{1}.p'.format(
-                          weather_data, year),
-                      data_type='pv_feedin')
+    feedin = get_feedin_data(load_pv_feedin,
+                             filename='pv_feedin__{0}_{1}.p'.format(
+                                 weather_data, year),
+                             type='pv', multi_weather=multi_weather,
+                             power_plant = pv_module)
 # TODO: total sum of feedins for PV + Wind (feedin: Dictionary, keys: gids)
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
@@ -179,13 +177,17 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            scale_parameter = 8760
-            weather_geoplot(calms_max, conn, save_folder1,scale_parameter, weather_data, show_plot,
-                            legend_label, save_figure, cmapname,
-                            filename_plot='Longest_calms_' +
-                                           '{0}_{1}_{2}_{3}_{4}.png'.format(
-                                               energy_source, weather_data,
-                                               year, power_limit[i], string))
+            scale_value = 8760
+            geo_plot(calms_max, conn,
+                     filename_plot='Longest_calms_' +
+                                   '{0}_{1}_{2}_{3}_{4}.png'.format(
+                                       energy_source, weather_data,
+                                       year, power_limit[i], string),
+                     legend_label=legend_label,
+                     weather_data=weather_data, show_plot=show_plot,
+                     save_figure=save_figure, save_dir=save_folder1,
+                     cmap_name=cmapname,
+                     scale_value=scale_value)
         if 'frequency' in geoplots:
             # Creates Plot only for unfiltered calms
             if (k == 0 and 'unfiltered' in filter):
@@ -198,28 +200,33 @@ for i in range(len(power_limit)):
                             int(min_lengths[j]), year,
                             int(power_limit[i] * 100), energy_source,
                             weather_data))
-                    scale_parameter = 99
-                    weather_geoplot(frequencies, conn, save_folder1,scale_parameter, weather_data, show_plot,
-                                    legend_label, save_figure,
-                                    cmapname,
-                                    filename_plot=
-                                    'Frequency_{0}_{1}_{2}h_{3}_{4}.png'.format(
-                                         energy_source, weather_data,
-                                         int(min_lengths[j]), year,
-                                         power_limit[i]))
+                    scale_value = 99
+                    geo_plot(frequencies, conn,
+                             filename_plot=(
+                                 'Frequency_{0}_{1}_{2}h_{3}_{4}.png'.format(
+                                    energy_source, weather_data,
+                                    int(min_lengths[j]), year,
+                                    power_limit[i])),
+                             legend_label=legend_label,
+                             weather_data=weather_data, show_plot=show_plot,
+                             save_figure=save_figure, save_dir=save_folder1,
+                             cmap_name=cmapname,
+                             scale_value=scale_value)
         if 'longest_calms' in histograms:
             # Histogram containing longest calms of each location
             legend_label = ('Longest calms Germany ' +
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i]*100), energy_source,
                                 string, weather_data))
-            plot_histogram(calms_max, save_folder2, show_plot, legend_label, x_label,
-                           y_label, save_figure, y_limit,
-                           x_limit, bin_width, tick_freq,
-                           filename_plot='Histogram_longest_calms_' +
-                                         '_{0}_{1}_{2}_{3}_{4}.png'.format(
-                                             energy_source, weather_data, year,
-                                             power_limit[i], string))
+            histogram(calms_max, legend_label=legend_label, x_label=x_label,
+                      y_label=y_label, x_limit=x_limit, y_limit=y_limit,
+                      bin_width=bin_width, tick_freq=tick_freq,
+                      show_plot=show_plot, save_figure=save_figure,
+                      filename_plot='Histogram_longest_calms_' +
+                                    '_{0}_{1}_{2}_{3}_{4}.png'.format(
+                                        energy_source, weather_data, year,
+                                        power_limit[i], string),
+                      save_dir=save_folder2)
         if 'all_calms' in histograms:
             # Histogram containing all calms of all location
             calm_arr = np.array([])
@@ -230,26 +237,31 @@ for i in range(len(power_limit)):
                             '{0} power limit < {1}% {2} {3} {4}'.format(
                                 year, int(power_limit[i] * 100), energy_source,
                                 string, weather_data))
-            plot_histogram(calm_df, save_folder2, show_plot, legend_label, x_label, y_label,
-                           save_figure, y_limit, x_limit,
-                           bin_width, tick_freq,
-                           filename_plot='Histogram_calms_' +
-                                         '_{0}_{1}_{2}_{3}_{4}.png'.format(
-                                             energy_source, weather_data, year,
-                                             power_limit[i], string))
+            histogram(calm_df, legend_label=legend_label, x_label=x_label,
+                      y_label=y_label, x_limit=x_limit, y_limit=y_limit,
+                      bin_width=bin_width, tick_freq=tick_freq,
+                      show_plot=show_plot, save_figure=save_figure,
+                      filename_plot='Histogram_calms_' +
+                                    '_{0}_{1}_{2}_{3}_{4}.png'.format(
+                                        energy_source, weather_data, year,
+                                        power_limit[i], string),
+                      save_dir=save_folder2)
 # print(str(time.clock() - t0) + ' seconds since t0')
 
 # --------------------------- Average wind speed ---------------------------- #
 if 'average_wind_speed' in others:
     print('Calculating average wind speed...')
-    wind_speed = calculate_avg_wind_speed(multi_weather)
+    wind_speed = avg_wind_speed(multi_weather)
     # Geoplot of average wind speed of each location
     legend_label = 'Average wind speed {0} {1}'.format(year, weather_data)
-    scale_parameter=9
-    weather_geoplot(wind_speed, conn, save_folder3, scale_parameter, weather_data, show_plot, legend_label,
-                    save_figure, cmapname,
-                    filename_plot='Average_wind_speed_{0}_{1}'.format(
-                        year, weather_data))
+    scale_value = 9
+    geo_plot(wind_speed, conn,
+             filename_plot='Average_wind_speed_{0}_{1}'.format(
+                 year, weather_data),
+             legend_label=legend_label,
+             weather_data=weather_data, show_plot=show_plot,
+             save_figure=save_figure, save_dir=save_folder3,
+             cmap_name=cmapname, scale_value=scale_value)
 
 # # ---------------------------- Jahresdauerlinie ----------------------------- #
 # # Plot of "Jahresdauerlinie"
