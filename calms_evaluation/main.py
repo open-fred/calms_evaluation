@@ -82,18 +82,19 @@ save_folder3 = save_folder1
 # Specification of the weather data set CoastDat2
 coastDat2 = {
     'pressure': 0,
-    'temp_air': 2,
-    'v_wind': 10,
-    'Z0': 0}
+    'air_temperature': 2,
+    'wind_speed': 10,
+    'roughness_length': 0}
 Merra2 = {
     'pressure': 0,
-    'temp_air': 2,
-    'v_wind': 50,
-    'Z0': 0}
+    'air_temperature': 2,
+    'wind_speed': 50,
+    'roughness_length': 0}
 if weather_data == 'coastdat':
     weather_data_height = coastDat2
 elif weather_data == 'merra':
     weather_data_height = Merra2
+
 # Specification of the wind turbine
 enerconE126 = {
     'turbine_name': 'ENERCON E 126 7500',
