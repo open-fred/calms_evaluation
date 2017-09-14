@@ -1,5 +1,6 @@
 import copy
 import logging
+import pandas as pd
 import pvlib
 from pvlib.pvsystem import PVSystem
 from pvlib.location import Location
@@ -8,7 +9,7 @@ from windpowerlib.modelchain import ModelChain as ModelChainWind
 from windpowerlib.wind_turbine import WindTurbine
 
 
-def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
+def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=30,
        albedo=0.2):
     r"""
     Calculates specific PV feed-in for each FeedinWeather object in
@@ -28,7 +29,7 @@ def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
         Azimuth angle of the module. North=0, East=90, South=180, West=270.
         Default: 180.
     tilt : float
-        Tilt angle of the module. Facing up=0, facing horizon=90. Default: 60.
+        Tilt angle of the module. Facing up=0, facing horizon=90. Default: 30.
     albedo : float
         The ground albedo. Default: 0.2.
 
@@ -40,6 +41,7 @@ def pv(multi_weather, module_name, inverter_name, azimuth=180, tilt=60,
 
     """
     #ToDo default values prüfen
+    #ToDo Umrechnung MERRA Daten
 
     logging.info('Calculating PV feedin...')
 
@@ -116,7 +118,7 @@ def wind(multi_weather, weather_data_height, turbine):
 
     """
 
-    #ToDo: make multiindex
+    #ToDo: Modelchain mit density?
 
     logging.info('Calculating wind energy feed-in...')
 
@@ -140,13 +142,17 @@ def wind(multi_weather, weather_data_height, turbine):
         # 'wind_speed') and the second level contains the height as integer at
         # which it applies (e.g. 10, if it was measured at a height of 10 m)
         weather = copy.deepcopy(multi_weather[i].data)
-        weather['ghi'] = weather['dhi'] + weather['dirhi']
+        weather = weather.drop(['dhi', 'dirhi'], 1)
         weather['temp_air'] = weather.temp_air - 273.15
         weather.rename(columns={'v_wind': 'wind_speed',
                                 'temp_air': 'air_temperature',
-                                'Z0': 'roughness_length'},
+                                'z0': 'roughness_length'},
                        inplace=True)
-
+        weather = pd.DataFrame(weather.values, index=weather.index,
+                               columns=pd.MultiIndex.from_tuples(
+                                   [(column, weather_data_height[column])
+                                    for column in weather.columns],
+                                   names=['variable', 'height']))
         # windpowerlib's ModelChain
         mc = ModelChainWind(wind_turbine).run_model(weather)
 
