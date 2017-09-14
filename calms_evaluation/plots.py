@@ -9,7 +9,7 @@ from tools import fetch_geometries_from_db
 
 def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
              show_plot=True, save_figure=True, filename_plot='geoplot.png',
-             save_dir='Plots', cmap_name='inferno_r', scale_value=None):
+             save_dir=None, cmap_name='inferno_r', scale_value=None):
     r"""
     Plots results for every FeedinWeather object on a map of Germany.
 
@@ -33,8 +33,10 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
         the name specified by `filename_plot`. Default: True.
     filename_plot : String
         Name the plot is saved under. Default: 'geoplot.png'.
-    save_dir : String
-        Name of directory the plot is saved in. Default: Plots.
+    save_dir : None or String
+        Name of directory the plot is saved in. The directory is not created
+        automatically but needs to be created manually. If None, the plot is
+        saved in the same directory as this file. Default: None.
     cmap_name : String
         Name of the colormap. Default: 'inferno_r'.
     scale_value : None or float
@@ -44,8 +46,6 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
     """
     #ToDo results_df sollte kein df sein? besser series! innerhalb der funktion
     #dann name der series zu results setzen
-    #ToDo Plots directory anlegen, falls es nicht existiert
-    #ToDo plot directory nicht unbedingt in selbem Ordner wie file
 
     fig = plt.figure()
 
@@ -107,15 +107,16 @@ def geo_plot(results_df, conn, legend_label=None, weather_data='coastdat',
     if show_plot:
         plt.show()
     if save_figure:
-        fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), save_dir, filename_plot)))
+        if not save_dir:
+            save_dir = os.path.dirname(__file__)
+        fig.savefig(os.path.abspath(os.path.join(save_dir, filename_plot)))
     plt.close()
 
 
 def histogram(results_df, legend_label=None, x_label=None, y_label=None,
               x_limit=None, y_limit=None, bin_width=50, tick_freq=100,
               show_plot=True, save_figure=True, filename_plot='histogram.png',
-              save_dir='Plots'):
+              save_dir=None):
     r"""
     Plots histogram.
 
@@ -145,15 +146,15 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
         the name specified by `filename_plot`. Default: True.
     filename_plot : String
         Name the plot is saved under. Default: 'histogram.png'.
-    save_dir : String
-        Name of directory the plot is saved in. Default: Plots.
+    save_dir : None or String
+        Name of directory the plot is saved in. The directory is not created
+        automatically but needs to be created manually. If None, the plot is
+        saved in the same directory as this file. Default: None.
 
     """
 
     #ToDo results_df sollte kein df sein? besser series! innerhalb der funktion
     #dann name der series zu results setzen
-    #ToDo Plots directory anlegen, falls es nicht existiert
-    #ToDo plot directory nicht unbedingt in selbem Ordner wie file
 
     data_sorted = np.sort(np.array(results_df['results']))
 
@@ -176,8 +177,9 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
     if show_plot:
         plt.show()
     if save_figure:
-        fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), save_dir, filename_plot)))
+        if not save_dir:
+            save_dir = os.path.dirname(__file__)
+        fig.savefig(os.path.abspath(os.path.join(save_dir, filename_plot)))
     fig.set_tight_layout(True)
     plt.close()
 
@@ -185,7 +187,7 @@ def histogram(results_df, legend_label=None, x_label=None, y_label=None,
 def duration_curve(results_df, legend_label=None, x_label=None, y_label=None,
                    x_limit=None, y_limit=None, show_plot=True,
                    save_figure=True, filename_plot='duration_curve.png',
-                   save_dir='Plots'):
+                   save_dir=None):
     r"""
     Plots duration curve.
 
@@ -211,8 +213,10 @@ def duration_curve(results_df, legend_label=None, x_label=None, y_label=None,
         the name specified by `filename_plot`. Default: True.
     filename_plot : String
         Name the plot is saved under. Default: 'duration_curve.png'.
-    save_dir : String
-        Name of directory the plot is saved in. Default: Plots.
+    save_dir : None or String
+        Name of directory the plot is saved in. The directory is not created
+        automatically but needs to be created manually. If None, the plot is
+        saved in the same directory as this file. Default: None.
 
     """
 
@@ -231,7 +235,8 @@ def duration_curve(results_df, legend_label=None, x_label=None, y_label=None,
     if show_plot:
         plt.show()
     if save_figure:
-        fig.savefig(os.path.abspath(os.path.join(
-            os.path.dirname(__file__), save_dir, filename_plot)))
+        if not save_dir:
+            save_dir = os.path.dirname(__file__)
+        fig.savefig(os.path.abspath(os.path.join(save_dir, filename_plot)))
     fig.set_tight_layout(True)
     plt.close()

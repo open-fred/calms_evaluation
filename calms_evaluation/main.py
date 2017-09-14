@@ -57,7 +57,8 @@ geoplots = [
     'frequency'
 ]
 scale_value = None  # If None: standardization with maximum calm length
-save_folder1 = 'Plots'
+save_folder1 = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                            'Plots'))
 cmapname = 'inferno_r'
 min_lengths = [24.0, 48.0, 7*24.0, 14*24.0, 28*24.0]  # Minimum calm lengths for frequency plot
 
