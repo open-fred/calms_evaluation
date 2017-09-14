@@ -9,6 +9,7 @@ Options:
 
 '''
 import os
+from docopt import docopt
 import oemof.db as db
 import geoplot
 import matplotlib.pyplot as plt
@@ -22,11 +23,6 @@ from tools import (fetch_shape_germany_from_db, get_weather_data,
 from plots import geo_plot, histogram
 from evaluations import (avg_wind_speed, calculate_calms,
                          create_calms_dict, calms_frequency, filter_peaks)
-
-try:
-    from docopt import docopt
-except ImportError:
-    print("Unable to import docopt.\nIs the 'docopt' package installed?")
 
 arguments = docopt(__doc__)
 print(arguments)
