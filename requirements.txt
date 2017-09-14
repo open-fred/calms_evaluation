@@ -1,7 +1,6 @@
 pandas >= 0.20.0
-windpowerlib == 0.0.4
-feedinlib == 0.0.11
 pvlib == 0.0.5
+windpowerlib == 0.0.6
 scipy
 
 # packages not on PyPI

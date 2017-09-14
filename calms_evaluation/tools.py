@@ -1,12 +1,8 @@
 import pandas as pd
 import pickle
-import copy
-from oemof.db import coastdat
-from feedinlib.weather import FeedinWeather
-from shapely.geometry import Point
-import dateutil.parser
 
 import feedin
+import weather
 
 
 def fetch_geometries_from_db(conn, **kwargs):
@@ -74,85 +70,6 @@ def fetch_shape_germany_from_db(conn):
     return conn.execute(sql_str).fetchall()[0]
 
 
-def create_merra_multi_weather(conn, filename):
-    """
-    Reads dumped pd.DataFrame containing MERRA2 weather data for one year
-    (created with OPSD weather data script [1]) and generates `multi_weather`
-    (list of FeedinWeather objects).
-
-    Parameters
-    ----------
-    conn : sqlalchemy connection object
-        Use function `connection` from oemof.db to establish database
-        connection.
-    filename : String
-        Filename with path to dumped dataframe.
-
-    References
-    ----------
-    .. [1] OPSD weather data github
-    """
-
-    #ToDo: add link to OPSD
-    #ToDo: check if units are the same as for coastdat data
-
-    df_merra = pd.read_pickle(filename)
-    # drop columns that are not needed
-    df_merra = df_merra.drop(['v1', 'v2', 'h1', 'h2', 'cumulated hours'], 1)
-
-    # get all distinct pairs of latitude and longitude in order to create
-    # one FeedinWeather object for each data point
-    df_lat_lon = df_merra.groupby(['lat', 'lon']).size().reset_index().drop(0,
-        1)
-
-    # make timeindex once to use for each multi_weather entry
-    # get timestamps for one data point
-    timestamp_series = df_merra[(df_merra.lat == df_lat_lon.loc[0, 'lat']) &
-                                (df_merra.lon == df_lat_lon.loc[0, 'lon'])][
-        'timestamp']
-    # parse timestamp string to timezone aware datetime object
-    timestamp_series = timestamp_series.apply(
-        lambda x: dateutil.parser.parse(x))
-
-    # get geometry gids for each data point from db
-    sql_str = '''
-        SELECT gid, ST_X(geom) AS long, ST_Y(geom) AS lat
-        FROM public.merra_grid;'''
-    results = conn.execute(sql_str)
-    cols = results.keys()
-    merra_gid_df = pd.DataFrame(results.fetchall(), columns=cols)
-
-    # create FeedinWeather object for each data point (lat-lon pair)
-    multi_weather = []
-    for i in range(len(df_lat_lon)):
-        data_df = df_merra[(df_merra.lat == df_lat_lon.loc[i, 'lat']) &
-                           (df_merra.lon == df_lat_lon.loc[i, 'lon'])]
-        data_df = data_df.drop(['lat', 'lon', 'timestamp'], 1)
-        data_df = data_df.set_index(timestamp_series)
-        data_df = data_df.rename(columns={'v_50m': 'v_wind',
-                                          'T': 'temp_air',
-                                          'p': 'pressure'})
-        longitude = df_lat_lon.loc[i, 'lon']
-        latitude = df_lat_lon.loc[i, 'lat']
-        geom = Point(longitude, latitude)
-        data_height = {'v_wind': 50,
-                       'temp_air': 2,
-                       'dhi': 0,
-                       'dirhi': 0,
-                       'pressure': 0,
-                       'Z0': 0}
-        name = int(
-            merra_gid_df[(merra_gid_df['long'] == longitude) & (
-                          merra_gid_df['lat'] == latitude)].iloc[0]['gid'])
-        feedin_object = FeedinWeather(data=copy.deepcopy(data_df),
-            timezone=data_df.index.tz,
-            longitude=longitude, latitude=latitude,
-            geometry=geom, data_height=data_height,
-            name=name)
-        multi_weather.append(copy.deepcopy(feedin_object))
-    return multi_weather
-
-
 def get_weather_data(pickle_load, filename='pickle_dump.p', weather_data=None,
                      conn=None, year=None, geom=None):
     """
@@ -191,16 +108,17 @@ def get_weather_data(pickle_load, filename='pickle_dump.p', weather_data=None,
         data = pickle.load(open(filename, 'rb'))
     else:
         if weather_data == 'coastdat':
-            data = coastdat.get_weather(conn, geom, year)
+            data = weather.create_feedinweather_objects_coastdat(
+                conn, geom, year)
         elif weather_data == 'merra':
-            data = create_merra_multi_weather(conn, filename)
+            data = weather.create_feedinweather_objects_merra(conn, filename)
             filename = 'multiweather_merra_' + str(year) + '.p'
         pickle.dump(data, open(filename, 'wb'))
     return data
 
 
 def get_feedin_data(pickle_load, filename='pickle_dump.p', type=None,
-                    multi_weather=None,  power_plant=None,
+                    multi_weather=None, power_plant=None,
                     weather_data_height=None):
     """
     Helper function to load pickled feed-in data or retrieve data and dump it.
@@ -242,5 +160,3 @@ def get_feedin_data(pickle_load, filename='pickle_dump.p', type=None,
             data = feedin.pv(multi_weather, **power_plant)
         pickle.dump(data, open(filename, 'wb'))
     return data
-
-

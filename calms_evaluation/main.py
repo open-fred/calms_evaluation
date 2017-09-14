@@ -8,15 +8,15 @@ Options:
                          and 'Wind_PV'
 
 '''
+import os
 import oemof.db as db
 import geoplot
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import numpy as np
 import pandas as pd
-# import time
+import time
 import pickle
-from feedinlib import powerplants as plants
 from tools import (fetch_shape_germany_from_db, get_weather_data,
                    get_feedin_data)
 from plots import geo_plot, histogram
@@ -108,7 +108,7 @@ pv_module = {
     'module_name': 'LG_LG290N1C_G3__2013_',
     'inverter_name': 'ABB__MICRO_0_25_I_OUTD_US_208_208V__CEC_2014_',
     'azimuth': 180,
-    'tilt': 60,
+    'tilt': 30,
     'albedo': 0.2}
 
 # Get geometry for Germany for geoplot
@@ -129,24 +129,23 @@ multi_weather = get_weather_data(load_multi_weather,
 
 # ------------------------------ Feedin data -------------------------------- #
 if (energy_source == 'Wind' or energy_source == 'Wind_PV'):
-    turbine = plants.WindPowerPlant(**enerconE126)
     feedin = get_feedin_data(load_wind_feedin,
                              filename='windfeedin_{0}_{1}.p'.format(
                                  weather_data, year),
                              type='wind', multi_weather=multi_weather,
-                             power_plant=turbine,
+                             power_plant=enerconE126,
                              weather_data_height=weather_data_height)
 if (energy_source == 'PV' or energy_source == 'Wind_PV'):
     feedin = get_feedin_data(load_pv_feedin,
                              filename='pv_feedin__{0}_{1}.p'.format(
                                  weather_data, year),
                              type='pv', multi_weather=multi_weather,
-                             power_plant = pv_module)
+                             power_plant=pv_module)
 # TODO: total sum of feedins for PV + Wind (feedin: Dictionary, keys: gids)
 # -------------------- Calms: Calculations and Geoplots --------------------- #
 # Calculate calms
 print('Calculating calms...')
-# t0 = time.clock()
+t0 = time.clock()
 for i in range(len(power_limit)):
     print('  ...with power limit: ' + str(int(power_limit[i]*100)) + '%')
     # Get all calms
