@@ -8,6 +8,9 @@ from oemof.db import tools as oemof_tools
 from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
 import dateutil.parser
+from pvlib import solarposition as sp
+from pvlib.location import Location
+from pvlib import irradiance
 
 # ToDo: Document module!
 
@@ -84,9 +87,8 @@ def create_feedinweather_objects_merra(conn, filename):
     # drop columns that are not needed
     df_merra = df_merra.drop(
         ['v1', 'v2', 'h1', 'h2', 'cumulated hours', 'rho'], 1)
-    # ToDo: Vorher noch GHI und DHI berechnen
-    df_merra.rename(columns={'SWTDN': 'dhi',
-                             'SWGDN': 'dirhi'},
+    df_merra.rename(columns={'SWTDN': 'toa',
+                             'SWGDN': 'ghi'},
                     inplace=True)
     # get all distinct pairs of latitude and longitude in order to create
     # one FeedinWeather object for each data point
@@ -115,11 +117,15 @@ def create_feedinweather_objects_merra(conn, filename):
     for i in range(len(df_lat_lon)):
         data_df = df_merra[(df_merra.lat == df_lat_lon.loc[i, 'lat']) &
                            (df_merra.lon == df_lat_lon.loc[i, 'lon'])]
-        data_df = data_df.drop(['lat', 'lon', 'timestamp'], 1)
         data_df = data_df.set_index(timestamp_series)
         data_df = data_df.rename(columns={'v_50m': 'v_wind',
                                           'T': 'temp_air',
                                           'p': 'pressure'})
+        #data_df = convert_merra_radiation_data(data_df)
+        # temporary values until correct values are calculated
+        data_df['dhi'] = 0
+        data_df['dirhi'] = 0
+        data_df = data_df.drop(['lat', 'lon', 'timestamp', 'toa', 'ghi'], 1)
         longitude = df_lat_lon.loc[i, 'lon']
         latitude = df_lat_lon.loc[i, 'lat']
         geom = Point(longitude, latitude)
@@ -180,6 +186,69 @@ def create_feedinweather_objects_coastdat(conn, geometry, year):
         logging.error('Unknown geometry type: {0}'.format(geometry.geom_type))
         obj = None
     return obj
+
+
+def convert_merra_radiation_data(merra_df):
+    """
+    This script can be used to read hourly Merra2-Data (.csv) and to
+    convert this weather data set to a weather
+    set that can be read by FeedInLib
+
+    parameters:
+    lat = latitude of location as float e.g. 4.0
+    lon = longitude of location as float e.g. 116.25
+    csv_merra2=['STRINGNAME.csv'] as string , STRINGNAME= path to downloaded Dataframe from Merra2 via
+    https://data.open-power-system-data.org/weather_data/
+
+    out:
+    weather merra as DataFrame that can be used as feedinlib.FeedinWeather[data]
+    """
+
+    solar_position = sp.get_solarposition(
+        merra_df.index, merra_df.lat[0], merra_df.lon[0],
+        pressure=merra_df['pressure'].mean(),
+        temperature=(merra_df['temp_air'] - 273.15).mean())
+
+    merra_df['elevation'] = solar_position.elevation.values
+
+    merra_df['k'] = merra_df.ghi / (merra_df.toa * np.sin(np.deg2rad(
+        merra_df.elevation)))
+    merra_df['k'].fillna(0, inplace=True)
+
+    a = 1.4 - 1.794 * merra_df.k + 0.177 * np.sin(
+        np.deg2rad(merra_df.elevation))
+    b = 0.486 * merra_df.k + 0.182 * np.sin(np.deg2rad(merra_df.elevation))
+    for i, x in merra_df.iterrows():
+        # Reindl correlations to calculate diffuse fraction
+        if 0 < x.k <= 0.3:
+            merra_df.ix[i, 'Idiff_I'] = (1.02 - 0.254 * x.k + 0.0123 * np.sin(
+                np.deg2rad(x.elevation)))
+        elif 0.3 < x.k <= 0.78 and a.loc[i] >= 0.1:
+            merra_df.ix[i, 'Idiff_I'] = a.loc[i]
+        elif x.k > 0.78 and b.loc[i] >= 0.1:
+            merra_df.ix[i, 'Idiff_I'] = b.loc[i]
+        else:
+            merra_df.ix[i, 'Idiff_I'] = 0
+
+        # Process data: eliminate extreme data according to limits Case 1
+        # and Case 2 in Reindl
+        if (merra_df.ix[i, 'Idiff_I'] < 0.9 and x.k < 0.2 or
+                        merra_df.ix[i, 'Idiff_I'] > 0.8 and x.k > 0.6 or
+                    merra_df.ix[i, 'Idiff_I'] > 1 or x.ghi - x.toa > 0):
+            merra_df.ix[i, 'Idiff_I'] = 0
+
+    merra_df['dhi'] = merra_df.ghi * merra_df['Idiff_I']
+    merra_df['dirhi'] = merra_df.ghi * (1 - merra_df['Idiff_I'])
+
+    merra_df['dni'] = irradiance.dni(
+        merra_df['ghi'], merra_df['dhi'], solar_position.zenith,
+        clearsky_dni=Location(
+            merra_df.lat[0], merra_df.lon[0]).get_clearsky(
+            merra_df.index).dni,
+        clearsky_tolerance=1.1,
+        zenith_threshold_for_clearsky_limit=64)
+
+    return merra_df
 
 
 def sql_weather_string(year, sql_part):
