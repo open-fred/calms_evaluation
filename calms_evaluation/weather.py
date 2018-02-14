@@ -8,6 +8,7 @@ from oemof.db import tools as oemof_tools
 from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
 import dateutil.parser
+from scipy.spatial import cKDTree
 from pvlib import solarposition as sp
 from pvlib.location import Location
 from pvlib import irradiance
@@ -83,7 +84,8 @@ def create_feedinweather_objects_merra(conn, filename):
     # ToDo: add link to OPSD
     # ToDo: check if units are the same as for coastdat data
 
-    df_merra = pd.read_pickle(filename)
+    #df_merra = pd.read_pickle(filename)
+    df_merra = pd.read_csv(filename)
     # drop columns that are not needed
     df_merra = df_merra.drop(
         ['v1', 'v2', 'h1', 'h2', 'cumulated hours', 'rho'], 1)
@@ -188,7 +190,30 @@ def create_feedinweather_objects_coastdat(conn, geometry, year):
     return obj
 
 
-def convert_merra_radiation_data(merra_df):
+def reindl(df, k_col='k'):
+    a = 1.4 - 1.794 * df[k_col] + 0.177 * np.sin(np.deg2rad(df.elevation))
+    b = 0.486 * df[k_col] + 0.182 * np.sin(np.deg2rad(df.elevation))
+    for i, x in df.iterrows():
+        # Reindl correlations to calculate diffuse fraction
+        if 0 < x[k_col] <= 0.3:
+            df.ix[i, 'Idiff_I'] = (1.02 - 0.254 * x[k_col] + 0.0123 * np.sin(
+                np.deg2rad(x.elevation)))
+        elif 0.3 < x[k_col] <= 0.78 and a.loc[i] >= 0.1:
+            df.ix[i, 'Idiff_I'] = a.loc[i]
+        elif x[k_col] > 0.78 and b.loc[i] >= 0.1:
+            df.ix[i, 'Idiff_I'] = b.loc[i]
+        else:
+            df.ix[i, 'Idiff_I'] = 0
+
+        # Process data: eliminate extreme data according to limits Case 1
+        # and Case 2 in Reindl
+        if (df.ix[i, 'Idiff_I'] < 0.9 and x[k_col] < 0.2 or
+                        df.ix[i, 'Idiff_I'] > 0.8 and x[k_col] > 0.6 or
+                    df.ix[i, 'Idiff_I'] > 1 or x.ghi - x.toa > 0):
+            df.ix[i, 'Idiff_I'] = 0
+    return df
+
+def convert_merra_radiation_data(df):
     """
     This script can be used to read hourly Merra2-Data (.csv) and to
     convert this weather data set to a weather
@@ -204,41 +229,47 @@ def convert_merra_radiation_data(merra_df):
     weather merra as DataFrame that can be used as feedinlib.FeedinWeather[data]
     """
 
-    solar_position = sp.get_solarposition(
-        merra_df.index, merra_df.lat[0], merra_df.lon[0],
-        pressure=merra_df['pressure'].mean(),
-        temperature=(merra_df['temp_air'] - 273.15).mean())
+    location = Location(latitude=52.456032, longitude=13.525282,
+                        tz='Europe/Berlin', altitude=60, name='HTW Berlin')
 
-    merra_df['elevation'] = solar_position.elevation.values
+    solar_position = location.get_solarposition(
+        df.index, pressure=df['pressure'].mean(),
+        temperature=df['temp_air'].mean())
 
-    merra_df['k'] = merra_df.ghi / (merra_df.toa * np.sin(np.deg2rad(
-        merra_df.elevation)))
-    merra_df['k'].fillna(0, inplace=True)
+    df['elevation'] = solar_position.elevation.values
 
-    a = 1.4 - 1.794 * merra_df.k + 0.177 * np.sin(
-        np.deg2rad(merra_df.elevation))
-    b = 0.486 * merra_df.k + 0.182 * np.sin(np.deg2rad(merra_df.elevation))
-    for i, x in merra_df.iterrows():
-        # Reindl correlations to calculate diffuse fraction
-        if 0 < x.k <= 0.3:
-            merra_df.ix[i, 'Idiff_I'] = (1.02 - 0.254 * x.k + 0.0123 * np.sin(
-                np.deg2rad(x.elevation)))
-        elif 0.3 < x.k <= 0.78 and a.loc[i] >= 0.1:
-            merra_df.ix[i, 'Idiff_I'] = a.loc[i]
-        elif x.k > 0.78 and b.loc[i] >= 0.1:
-            merra_df.ix[i, 'Idiff_I'] = b.loc[i]
-        else:
-            merra_df.ix[i, 'Idiff_I'] = 0
+    df['k'] = df.ghi / (df.toa * np.sin(np.deg2rad(df.elevation)))
+    df['k'].fillna(0, inplace=True)
+    df['k2'] = df.k
+    df.k2.loc[df.k2 < 0] = np.nan
+    df.k2.loc[df.k2 > 1] = np.nan
 
-        # Process data: eliminate extreme data according to limits Case 1
-        # and Case 2 in Reindl
-        if (merra_df.ix[i, 'Idiff_I'] < 0.9 and x.k < 0.2 or
-                        merra_df.ix[i, 'Idiff_I'] > 0.8 and x.k > 0.6 or
-                    merra_df.ix[i, 'Idiff_I'] > 1 or x.ghi - x.toa > 0):
-            merra_df.ix[i, 'Idiff_I'] = 0
+    df_2 = reindl(df, k_col='k')
 
-    merra_df['dhi'] = merra_df.ghi * merra_df['Idiff_I']
-    merra_df['dirhi'] = merra_df.ghi * (1 - merra_df['Idiff_I'])
+    # a = 1.4 - 1.794 * merra_df.k + 0.177 * np.sin(
+    #     np.deg2rad(merra_df.elevation))
+    # b = 0.486 * merra_df.k + 0.182 * np.sin(np.deg2rad(merra_df.elevation))
+    # for i, x in merra_df.iterrows():
+    #     # Reindl correlations to calculate diffuse fraction
+    #     if 0 < x.k <= 0.3:
+    #         merra_df.ix[i, 'Idiff_I'] = (1.02 - 0.254 * x.k + 0.0123 * np.sin(
+    #             np.deg2rad(x.elevation)))
+    #     elif 0.3 < x.k <= 0.78 and a.loc[i] >= 0.1:
+    #         merra_df.ix[i, 'Idiff_I'] = a.loc[i]
+    #     elif x.k > 0.78 and b.loc[i] >= 0.1:
+    #         merra_df.ix[i, 'Idiff_I'] = b.loc[i]
+    #     else:
+    #         merra_df.ix[i, 'Idiff_I'] = 0
+    #
+    #     # Process data: eliminate extreme data according to limits Case 1
+    #     # and Case 2 in Reindl
+    #     if (merra_df.ix[i, 'Idiff_I'] < 0.9 and x.k < 0.2 or
+    #                     merra_df.ix[i, 'Idiff_I'] > 0.8 and x.k > 0.6 or
+    #                 merra_df.ix[i, 'Idiff_I'] > 1 or x.ghi - x.toa > 0):
+    #         merra_df.ix[i, 'Idiff_I'] = 0
+
+    df['dhi'] = df.ghi * df_2['Idiff_I']
+    df['dirhi'] = df.ghi * (1 - df_2['Idiff_I'])
 
     merra_df['dni'] = irradiance.dni(
         merra_df['ghi'], merra_df['dhi'], solar_position.zenith,
@@ -360,3 +391,46 @@ def create_multi_weather(df, rename_dc):
         obj = create_single_weather(gid_df, rename_dc)
         weather_list.append(obj)
     return weather_list
+
+
+def return_unique_pairs(df, column_names):
+    r"""
+    Returns all unique pairs of values of DataFrame `df`.
+    Returns
+    -------
+    pd.DataFrame
+        Columns (`column_names`) contain unique pairs of values.
+    """
+    return df.groupby(column_names).size().reset_index().drop([0], axis=1)
+
+
+def get_closest_coordinates(df, coordinates, column_names=['lat', 'lon']):
+    r"""
+    Finds the coordinates of a data frame that are closest to `coordinates`.
+    Returns
+    -------
+    pd.Series
+        Contains closest coordinates with `column_names`as indices.
+    """
+    coordinates_df = return_unique_pairs(df, column_names)
+    tree = cKDTree(coordinates_df)
+    dists, index = tree.query(np.array(coordinates), k=1)
+    return coordinates_df.iloc[index]
+
+#create_feedinweather_objects_merra(None, 'weather_data_GER_1998.csv')
+lat = 52.456032
+lon = 13.525282
+merra_df = pd.read_csv('weather_data_GER_1998.csv', header=[0],
+                       index_col=[0], parse_dates=True)
+lat_lon = get_closest_coordinates(merra_df, [lat, lon])
+
+df = merra_df[(merra_df['lon'] == lat_lon['lon']) &
+              (merra_df['lat'] == lat_lon['lat'])]
+
+df.index = df.index.tz_localize('UTC')
+df.rename(columns={'T': 'temp_air', 'v_50m': 'wind_speed', 'p': 'pressure',
+                   'SWTDN': 'toa', 'SWGDN': 'ghi'}, inplace=True)
+df['temp_air'] = df['temp_air'] - 273.15
+
+convert_merra_radiation_data(df)
+
