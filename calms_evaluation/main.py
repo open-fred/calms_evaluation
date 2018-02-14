@@ -1,5 +1,6 @@
 '''
-Usage: plot_residual_load [options]
+Usage:
+    main.py [--option] [<argument>]
 
 Options:
 
