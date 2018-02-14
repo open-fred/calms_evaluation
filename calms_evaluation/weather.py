@@ -9,7 +9,6 @@ from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
 import dateutil.parser
 from scipy.spatial import cKDTree
-from pvlib import solarposition as sp
 from pvlib.location import Location
 from pvlib import irradiance
 
@@ -190,28 +189,119 @@ def create_feedinweather_objects_coastdat(conn, geometry, year):
     return obj
 
 
-def reindl(df, k_col='k'):
-    a = 1.4 - 1.794 * df[k_col] + 0.177 * np.sin(np.deg2rad(df.elevation))
-    b = 0.486 * df[k_col] + 0.182 * np.sin(np.deg2rad(df.elevation))
-    for i, x in df.iterrows():
-        # Reindl correlations to calculate diffuse fraction
-        if 0 < x[k_col] <= 0.3:
-            df.ix[i, 'Idiff_I'] = (1.02 - 0.254 * x[k_col] + 0.0123 * np.sin(
-                np.deg2rad(x.elevation)))
-        elif 0.3 < x[k_col] <= 0.78 and a.loc[i] >= 0.1:
-            df.ix[i, 'Idiff_I'] = a.loc[i]
-        elif x[k_col] > 0.78 and b.loc[i] >= 0.1:
-            df.ix[i, 'Idiff_I'] = b.loc[i]
-        else:
-            df.ix[i, 'Idiff_I'] = 0
+def reindl(row):
 
-        # Process data: eliminate extreme data according to limits Case 1
-        # and Case 2 in Reindl
-        if (df.ix[i, 'Idiff_I'] < 0.9 and x[k_col] < 0.2 or
-                        df.ix[i, 'Idiff_I'] > 0.8 and x[k_col] > 0.6 or
-                    df.ix[i, 'Idiff_I'] > 1 or x.ghi - x.toa > 0):
-            df.ix[i, 'Idiff_I'] = 0
-    return df
+    elevation_sin = np.sin(np.deg2rad(row.elevation))
+
+    # Reindl correlations to calculate diffuse fraction
+    if 0 < row.k <= 0.3:
+        fraction = 1.02 - 0.254 * row.k + 0.0123 * elevation_sin
+    elif 0.3 < row.k <= 0.78:
+        fraction = min(0.97, max(0.1,
+                                 1.4 - 1.794 * row.k + 0.177 * elevation_sin))
+    elif row.k > 0.78:
+        fraction = max(0.1, 0.486 * row.k + 0.182 * elevation_sin)
+    else:
+        fraction = np.nan
+
+    # Process data: eliminate extreme data according to limits Case 1
+    # and Case 2 in Reindl
+    if (fraction < 0.9 and row.k < 0.2 or
+                    fraction > 0.8 and row.k > 0.6 or
+                fraction > 1 or row.ghi - row.toa > 0):
+        fraction = 0
+
+    return fraction
+
+
+def erbs(ghi, zenith, doy):
+    r"""
+    Estimate DNI and DHI from GHI using the Erbs model.
+
+    The Erbs model [1]_ estimates the diffuse fraction DF from global
+    horizontal irradiance through an empirical relationship between DF
+    and the ratio of GHI to extraterrestrial irradiance, Kt. The
+    function uses the diffuse fraction to compute DHI as
+
+    .. math::
+
+        DHI = DF \times GHI
+
+    DNI is then estimated as
+
+    .. math::
+
+        DNI = (GHI - DHI)/\cos(Z)
+
+    where Z is the zenith angle.
+
+    Parameters
+    ----------
+    ghi: numeric
+        Global horizontal irradiance in W/m^2.
+    zenith: numeric
+        True (not refraction-corrected) zenith angles in decimal degrees.
+    doy: scalar, array or DatetimeIndex
+        The day of the year.
+
+    Returns
+    -------
+    data : OrderedDict or DataFrame
+        Contains the following keys/columns:
+
+            * ``dni``: the modeled direct normal irradiance in W/m^2.
+            * ``dhi``: the modeled diffuse horizontal irradiance in
+              W/m^2.
+            * ``kt``: Ratio of global to extraterrestrial irradiance
+              on a horizontal plane.
+
+    References
+    ----------
+    .. [1] D. G. Erbs, S. A. Klein and J. A. Duffie, Estimation of the
+       diffuse radiation fraction for hourly, daily and monthly-average
+       global radiation, Solar Energy 28(4), pp 293-302, 1982. Eq. 1
+
+    See also
+    --------
+    dirint
+    disc
+    """
+
+    dni_extra = extraradiation(doy)
+
+    # This Z needs to be the true Zenith angle, not apparent,
+    # to get extraterrestrial horizontal radiation)
+    i0_h = dni_extra * tools.cosd(zenith)
+
+    kt = ghi / i0_h
+    kt = np.maximum(kt, 0)
+
+    # For Kt <= 0.22, set the diffuse fraction
+    df = 1 - 0.09*kt
+
+    # For Kt > 0.22 and Kt <= 0.8, set the diffuse fraction
+    df = np.where((kt > 0.22) & (kt <= 0.8),
+                  0.9511 - 0.1604*kt + 4.388*kt**2 -
+                  16.638*kt**3 + 12.336*kt**4,
+                  df)
+
+    # For Kt > 0.8, set the diffuse fraction
+    df = np.where(kt > 0.8, 0.165, df)
+
+    dhi = df * ghi
+
+    dni = (ghi - dhi) / tools.cosd(zenith)
+
+    data = OrderedDict()
+    data['dni'] = dni
+    data['dhi'] = dhi
+    data['kt'] = kt
+
+    if isinstance(dni, pd.Series):
+        data = pd.DataFrame(data)
+
+    return data
+
 
 def convert_merra_radiation_data(df):
     """
@@ -239,47 +329,21 @@ def convert_merra_radiation_data(df):
     df['elevation'] = solar_position.elevation.values
 
     df['k'] = df.ghi / (df.toa * np.sin(np.deg2rad(df.elevation)))
-    df['k'].fillna(0, inplace=True)
-    df['k2'] = df.k
-    df.k2.loc[df.k2 < 0] = np.nan
-    df.k2.loc[df.k2 > 1] = np.nan
 
-    df_2 = reindl(df, k_col='k')
+    df['dhi_fraction'] = df.apply(reindl, axis=1)
 
-    # a = 1.4 - 1.794 * merra_df.k + 0.177 * np.sin(
-    #     np.deg2rad(merra_df.elevation))
-    # b = 0.486 * merra_df.k + 0.182 * np.sin(np.deg2rad(merra_df.elevation))
-    # for i, x in merra_df.iterrows():
-    #     # Reindl correlations to calculate diffuse fraction
-    #     if 0 < x.k <= 0.3:
-    #         merra_df.ix[i, 'Idiff_I'] = (1.02 - 0.254 * x.k + 0.0123 * np.sin(
-    #             np.deg2rad(x.elevation)))
-    #     elif 0.3 < x.k <= 0.78 and a.loc[i] >= 0.1:
-    #         merra_df.ix[i, 'Idiff_I'] = a.loc[i]
-    #     elif x.k > 0.78 and b.loc[i] >= 0.1:
-    #         merra_df.ix[i, 'Idiff_I'] = b.loc[i]
-    #     else:
-    #         merra_df.ix[i, 'Idiff_I'] = 0
-    #
-    #     # Process data: eliminate extreme data according to limits Case 1
-    #     # and Case 2 in Reindl
-    #     if (merra_df.ix[i, 'Idiff_I'] < 0.9 and x.k < 0.2 or
-    #                     merra_df.ix[i, 'Idiff_I'] > 0.8 and x.k > 0.6 or
-    #                 merra_df.ix[i, 'Idiff_I'] > 1 or x.ghi - x.toa > 0):
-    #         merra_df.ix[i, 'Idiff_I'] = 0
+    df['dhi'] = df.ghi * df.dhi_fraction
+    df['dirhi'] = df.ghi * (1 - df.dhi_fraction)
 
-    df['dhi'] = df.ghi * df_2['Idiff_I']
-    df['dirhi'] = df.ghi * (1 - df_2['Idiff_I'])
-
-    merra_df['dni'] = irradiance.dni(
-        merra_df['ghi'], merra_df['dhi'], solar_position.zenith,
-        clearsky_dni=Location(
-            merra_df.lat[0], merra_df.lon[0]).get_clearsky(
-            merra_df.index).dni,
+    df['dni'] = irradiance.dni(
+        df['ghi'], df['dhi'], solar_position.zenith,
+        clearsky_dni=location.get_clearsky(
+            df.index, solar_position=solar_position).dni,
         clearsky_tolerance=1.1,
-        zenith_threshold_for_clearsky_limit=64)
+        zenith_threshold_for_zero_dni=88.0,
+        zenith_threshold_for_clearsky_limit=80.0)
 
-    return merra_df
+    return df
 
 
 def sql_weather_string(year, sql_part):
@@ -418,9 +482,11 @@ def get_closest_coordinates(df, coordinates, column_names=['lat', 'lon']):
     return coordinates_df.iloc[index]
 
 #create_feedinweather_objects_merra(None, 'weather_data_GER_1998.csv')
+import time
+
 lat = 52.456032
 lon = 13.525282
-merra_df = pd.read_csv('weather_data_GER_1998.csv', header=[0],
+merra_df = pd.read_csv('weather_data_GER_2015.csv', header=[0],
                        index_col=[0], parse_dates=True)
 lat_lon = get_closest_coordinates(merra_df, [lat, lon])
 
@@ -430,7 +496,7 @@ df = merra_df[(merra_df['lon'] == lat_lon['lon']) &
 df.index = df.index.tz_localize('UTC')
 df.rename(columns={'T': 'temp_air', 'v_50m': 'wind_speed', 'p': 'pressure',
                    'SWTDN': 'toa', 'SWGDN': 'ghi'}, inplace=True)
-df['temp_air'] = df['temp_air'] - 273.15
+df.loc[:, 'temp_air'] = df.temp_air - 273.15
 
 convert_merra_radiation_data(df)
 
